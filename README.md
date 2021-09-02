@@ -1,2 +1,2 @@
-# model-ozatalay
+# AIM
 In this repository, we adapt the Atalay (2017) intersectoral DGE / intertemporal CGE model to the Australian economy. The result is a fully intertemporal model of the Australian economy that resembles the Australian Treasury's Intersectoral Model (TIM). In contrast with both Atalay (2017) and TIM, our solution is global as opposed to local. Instead of log-linearising around the steady state, we use value function iteration to obtain the full solution. Our solution method builds on Aldrich (2016) and Aldrich, Villaverde, Gallant and Ramirez (2011) using a graphics processor unit.
