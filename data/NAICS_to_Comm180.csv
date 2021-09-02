@@ -1,0 +1,99 @@
+Row Number,Commodity Code,Commodity Title,Related 1997 NAICS Codes,,Row Number,Commodity Code,Commodity Title,Related 1997 NAICS Codes
+1,212291,"Uranium, radium and vanadium ore mining",212291,,91,333922,Conveyors and conveying equipment,333922
+2,213111,Drilling oil and gas wells                                                                                                   ,213111,,92,333923,"Overhead cranes, hoists, and monorail systems",333923
+3,213112,Support activities for oil and gas operations                                                                                ,213112,,93,333924,"Industrial trucks, trailers, and stackers ",333924
+4,21311A,Support activities for other mining,"213113, 213114, 213115",,94,333991,Power-driven handtools,333991
+5,233511*,New residential 1-unit nonfarm structures construction                                                                                  ,23**,,95,333992,Welding and soldering equipment,333992
+6,233512*,New residential 2-4 unit nonfarm structures construction,23,,96,333993,Packaging machinery,333993
+7,233513*,New residential garden apartments construction,23,,97,333994,Industrial process furnaces and ovens,333994
+8,233514*,New high-rise apartments construction,23,,98,333996,Fluid power pumps and motors,333996
+9,233515*,New nonfarm residential additions and alterations                                                                           ,23,,99,33399A,"Scales, balances, and miscellaneous general purpose machinery","333997, 333999"
+10,233516*,New hotels and motels construction,23,,100,334111,Electronic computers,334111
+11,233517*,New dormitory and other group housing construction,23,,101,334112,Computer storage devices,334112
+12,233523*,New warehouse construction,23,,102,334113,Computer terminals,334113
+13,233524*,New garages and service stations construction,23,,103,334119,Other computer peripheral equipment,334119
+14,233525*,Other new nonfarm buildings construction,23,,104,334210,Telephone apparatus,33421
+15,233526*,New religious facilities construction,23,,105,334220,Broadcast and wireless communications equipment,33422
+16,233527*,New hospital construction,23,,106,334290,Other communications equipment,33429
+17,233528*,"New residential, institutiona,l and other health facilities construction",23,,107,334300,Audio and video equipment,3343
+18,233529*,New amusement and recreation facilities construction,23,,108,334510,Electromedical apparatus,334510
+19,233532*,New railroad facilities construction,23,,109,334511,"Search, detection, and navigation instruments",334511
+20,233533*,New electric utility construction,23,,110,334513,Industrial process variable instruments,334513
+21,233534*,New gas utility facilities construction,23,,111,334514,Totalizing fluid meters and counting devices,334514
+22,233535*,New petroleum pipelines construction,23,,112,334515,Electricity and signal testing instruments,334515
+23,233536*,New water supply facilities construction,23,,113,334516,Analytical laboratory instruments,334516
+24,233543*,New academic facilities construction,23,,114,334517,Irradiation apparatus,334517
+25,233544*,"New libraries, museums and cultural facilities construction",23,,115,334519,Other measuring and controlling devices,334519
+26,233545*,New commercial structures construction,23,,116,334613,Magnetic and optical recording media,334613
+27,233551*,New farm housing units and additions and alterations,23,,117,335120,Lighting fixtures,33512
+28,233552*,New farm service facilities construction,23,,118,335211,Electric housewares and household fans ,335211
+29,233572*,New dam and reservoir construction,23,,119,335212,Household vacuum cleaners ,335212
+30,233573*,Other new conservation and development construction,23,,120,335221,Household cooking appliances,335221
+31,233574*,Other new nonbuilding construction,23,,121,335222,Household refrigerators and home freezers,335222
+32,233612*,"New highways, bridges and other horizontal construction",23,,122,335224,Household laundry equipment,335224
+33,233621*,New industrial plants construction,23,,123,335228,Other major household appliances,335228
+34,233624*,New waste treatment plants construction,23,,124,335311,Electric power and specialty transformers,335311
+35,233625*,New sewer facilities construction,23,,125,335312,Motors and generators,335312
+36,233631*,New telephone and telegraph construction,23,,126,335313,Switchgear and switchboard apparatus ,335313
+37,233701*,Residential maintenance and repair construction,23,,127,335314,Relays and industrial controls,335314
+38,233703*,Farm residential maintenance and repair and major replacement,23,,128,335911,Storage batteries,335911
+39,233706*,Railroad maintenance and repair construction,23,,129,335929,Other communication and energy wire,335929
+40,233722*,New office building construction,23,,130,335931,Current-carrying wiring devices,335931
+41,313230,Nonwoven fabric mills,31323,,131,335999,Miscellaneous electrical equipment,335999
+42,314110,Carpet and rug mills,31411,,132,336110,Automobiles and light trucks,33611
+43,321920,Wood containers and pallets,32192,,133,336120,Heavy duty trucks ,33612
+44,321991,"Manufactured homes, mobile homes",321991,,134,336211,Motor vehicle bodies,336211
+45,325180,Other basic inorganic chemicals,325188,,135,336212,Truck trailers,336212
+46,3261A0,Foam products,"32614, 32615",,136,336213,Motor homes,336213
+47,326290,Other rubber products,32629,,137,336214,Travel trailers and campers,336214
+48,332212,Hand and edge tools,332212,,138,336360,Motor vehicle seating and interior trim,33636
+49,332213,Saw blades and handsaws,332213,,139,336411,Aircraft,336411
+50,332313,Plate work,332313,,140,336412,Aircraft engines and engine parts,336412
+51,332322,Sheet metal work,332322,,141,336414,Guided missiles and space vehicles,336414
+52,332323,Ornamental and architectural metal work,332323,,142,336500,Railroad rolling stock,3365
+53,332410,Power boilers and heat exchangers,33241,,143,336611,Ship building and repairing,336611
+54,332420,"Metal tanks, heavy gauge",33242,,144,336612,Boat building,336612
+55,332430,"Metal cans, boxes, and other containers",332431,,145,336991,"Motorcycles, bicycles, and parts",336991
+56,332500,Hardware,3325,,146,336999,All other transportation equipment,336999
+57,332910,Metal valves,33291,,147,337110,Wood kitchen cabinets and countertops,33711
+58,332996,Fabricated pipe and pipe fittings,332996,,148,337121,Upholstered household furniture,337121
+59,332999,Miscellaneous fabricated metal products,332999,,149,337122,Nonupholstered wood household furniture,337122
+60,333111,Farm machinery and equipment,333111,,150,337124,Metal household furniture,337124
+61,333112,Lawn and garden equipment,333112,,151,337125,"Household furniture, except wood and metal",337125
+62,333120,Construction machinery,33312,,152,337127,Institutional furniture,337127
+63,333131,Mining machinery and equipment,333131,,153,337211,Wood office furniture,337211
+64,333132,Oil and gas field machinery and equipment,333132,,154,337212,Custom architectural woodwork and millwork,337212
+65,333210,Sawmill and woodworking machinery,33321,,155,337214,"Office furniture, except wood",337214
+66,333220,Plastics and rubber industry machinery,33322,,156,337215,"Showcases, partitions, shelving, and lockers",337215
+67,333291,Paper industry machinery,333291,,157,337910,Mattresses,33791
+68,333292,Textile machinery,333292,,158,337920,Blinds and shades,33792
+69,333293,Printing machinery and equipment,333293,,159,339111,Laboratory apparatus and furniture,339111
+70,333294,Food product machinery,333294,,160,339112,Surgical and medical instruments,339112
+71,333295,Semiconductor machinery,333295,,161,339113,Surgical appliances and supplies,339113
+72,333298,All other industrial machinery,333298,,162,339114,Dental equipment and supplies,339114
+73,33331A,"Automatic vending, commercial laundry and drycleaning machinery","333311, 333312",,163,339920,Sporting and athletic goods,33992
+74,333313,Office machinery,333313,,164,339942,Lead pencils and art goods,339942
+75,333314,Optical instruments and lenses,333314,,165,339950,Sign manufacturing,339950
+76,333315,Photographic and photocopying equipment,333315,,166,339992,Musical instruments,339992
+77,333319,Other commercial and service machinery,333319,,167,339999,All other miscellaneous manufactured products,339999
+78,333411,Air purification equipment,333411,,168,420000,Wholesale trade                                                                                                         ,42
+79,333412,Industrial and commercial fans and blowers,333412,,169,4A0000,Retail trade                                                                                                            ,"44,45"
+80,333415,"A/C, refrigeration, and forced air heating equipment",333415,,170,481000,Air transportation                                                                                                      ,481
+81,333511,Industrial molds,333511,,171,482000,Rail transportation                                                                                                     ,482
+82,333512,Metal cutting machine tools,333512,,172,483000,Water transportation                                                                                                    ,483
+83,333513,Metal forming machine tools,333513,,173,484000,Truck transportation                                                                                                    ,484
+84,333514,"Special tools, dies, jigs, and fixtures",333514,,174,511200,Software publishers,5112
+85,33351A,Rolling mill and other metalworking machinery,"333516, 333518",,175,513300,Telecommunications,5133
+86,333611,Turbine and turbine generator set units,333611,,176,531210,Offices of real estate agents and brokers,53121
+87,333618,Other engine equipment,333618,,177,541330,Engineering services,54133
+88,333911,Pumps and pumping equipment,333911,,178,541511,Custom computer programming services,541511
+89,333912,Air and gas compressors,333912,,179,541512,Computer systems design services,541512
+90,333913,Measuring and dispensing pumps,333913,,180,S00300,Noncomparable imports,
+,,,,,,,,
+,,,,,,,,
+*,"Construction is classified by type of activity, such as the construction of new highways and ",,,,,,,
+,"streets, rather than by the type of construction contractor, such as heavy construction",,,,,,,
+,contractors who pave asphalt roads.,,,,,,,
+, ,,,,,,,
+**,A double asterisk following a North American Industry Classification System (NAICS) code,,,,,,,
+,indicates that the commodity in this NAICS code is included in more than one commodity.,,,,,,,
