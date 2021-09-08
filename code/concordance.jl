@@ -46,47 +46,50 @@ from19ToInd = Dict{String, Int64}();
 for i in eachindex(ANZSICDivByLetter);
     from19ToInd[ANZSICDivByLetter[i]] = Int(i);
 end
-IOIGTo19 = Dict{Float64, String}();
+IOIGTo20 = Dict{Float64, String}();
 for i in [1:1:114;];
     test = trunc(IOIG[i]/100);
-    if 1 <= test <= 5
-        IOIGTo19[IOIG[i]]="A"
+    # making ownership of dwellings it own sector
+    if IOIG[i] == "6701"
+        IOIGTo20[IOIG[i]]="T"
+    elseif 1 <= test <= 5
+        IOIGTo20[IOIG[i]]="A"
     elseif 6 <= test <= 10;
-        IOIGTo19[IOIG[i]]="B"
+        IOIGTo20[IOIG[i]]="B"
     elseif 11 <= test <= 25;
-        IOIGTo19[IOIG[i]]="C"
+        IOIGTo20[IOIG[i]]="C"
     elseif 26 <= test <= 29;
-        IOIGTo19[IOIG[i]]="D"
+        IOIGTo20[IOIG[i]]="D"
     elseif 30 <= test <= 32;
-        IOIGTo19[IOIG[i]]="E"
+        IOIGTo20[IOIG[i]]="E"
     elseif 33 <= test <= 38;
-        IOIGTo19[IOIG[i]]="F"
+        IOIGTo20[IOIG[i]]="F"
     elseif 39 <= test <= 43;
-        IOIGTo19[IOIG[i]]="G"
+        IOIGTo20[IOIG[i]]="G"
     elseif 44 <= test <= 45;
-        IOIGTo19[IOIG[i]]="H"
+        IOIGTo20[IOIG[i]]="H"
     elseif 46 <= test <= 53;
-        IOIGTo19[IOIG[i]]="I"
+        IOIGTo20[IOIG[i]]="I"
     elseif 54 <= test <= 60;
-        IOIGTo19[IOIG[i]]="J"
+        IOIGTo20[IOIG[i]]="J"
     elseif 62 <= test <= 64;
-        IOIGTo19[IOIG[i]]="K"
+        IOIGTo20[IOIG[i]]="K"
     elseif 66 <= test <= 67;
-        IOIGTo19[IOIG[i]]="L"
+        IOIGTo20[IOIG[i]]="L"
     elseif 69 <= test <= 70;
-        IOIGTo19[IOIG[i]]="M"
+        IOIGTo20[IOIG[i]]="M"
     elseif 72 <= test <= 73;
-        IOIGTo19[IOIG[i]]="N"
+        IOIGTo20[IOIG[i]]="N"
     elseif 75 <= test <= 77;
-        IOIGTo19[IOIG[i]]="O"
+        IOIGTo20[IOIG[i]]="O"
     elseif 80 <= test <= 82;
-        IOIGTo19[IOIG[i]]="P"
+        IOIGTo20[IOIG[i]]="P"
     elseif 84 <= test <= 87;
-        IOIGTo19[IOIG[i]]="Q"
+        IOIGTo20[IOIG[i]]="Q"
     elseif 89 <= test <= 92;
-        IOIGTo19[IOIG[i]]="R"
+        IOIGTo20[IOIG[i]]="R"
     elseif 94 <= test <= 96;
-        IOIGTo19[IOIG[i]]="S"
+        IOIGTo20[IOIG[i]]="S"
     else
         print("ERROR: An input has fallen outside of the range of categories")
     end
