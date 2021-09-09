@@ -50,7 +50,7 @@ IOIGTo20 = Dict{Float64, String}();
 for i in [1:1:114;];
     test = trunc(IOIG[i]/100);
     # making ownership of dwellings it own sector
-    if IOIG[i] == "6701"
+    if IOIG[i] == 6701.0
         IOIGTo20[IOIG[i]]="T"
     elseif 1 <= test <= 5
         IOIGTo20[IOIG[i]]="A"
