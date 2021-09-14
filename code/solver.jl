@@ -3,17 +3,17 @@ using DataFrames, JuMP, Ipopt, DelimitedFiles;
 include("reducedIO.jl")
 
 # evaluating variables and parameters
-A = ones(numSectors)
+#A = ones(numSectors)
 # compensation of employees
-LCurrent = zeros(numSectors)
+#LCurrent = zeros(numSectors)
 # consumption?
-CCurrent = zeros(numSectors)
+#CCurrent = zeros(numSectors)
 # output
-QCurrent = zeros(numSectors)
+#QCurrent = zeros(numSectors)
 #
-MCurrentT = zeros(numSectors)
+#MCurrentT = zeros(numSectors)
 #
-XCurrrentT = zeros(numSectors)
+#XCurrentT = zeros(numSectors)
 # new capital
 capFlowsReceivable = zeros(numSectors)
 # labour share
@@ -27,10 +27,11 @@ gammaM = zeros(numSectors,numSectors)
 # matrix of capital investment as shares
 gammaX = zeros(numSectors,numSectors)
 # intermediate inputs
-MCurrent = zeros(numSectors,numSectors)
+#MCurrent = zeros(numSectors,numSectors)
 # capital flows - sector to sector
-XCurrent = zeros(numSectors,numSectors)
+#XCurrent = zeros(numSectors,numSectors)
 # was called M, =reducedIO[numSectors+3,i]/(reducedIO[numSectors+1,i]+reducedIO[numSectors+3,i])
+#KNext = zeros(numSectors)
 
 epsM = 0.1
 epsQ = 1
@@ -44,9 +45,9 @@ deltaK = 0.01
 
 #calculating from data
 for i in 1:numSectors
-    QCurrent[i] = reducedIO[numSectors+8,i]
-    LCurrent[i] = reducedIO[numSectors+2,i]
-    CCurrent[i] = (reducedIO[i,numSectors+2]+reducedIO[i,numSectors+3])
+    #QCurrent[i] = reducedIO[numSectors+8,i]
+    #LCurrent[i] = reducedIO[numSectors+2,i]
+    #CCurrent[i] = (reducedIO[i,numSectors+2]+reducedIO[i,numSectors+3])
     alpha[i] = reducedIO[numSectors+2,i]/(reducedIO[numSectors+2,i]+reducedIO[numSectors+3,i])
     mu[i] = reducedIO[numSectors+3,i]/(reducedIO[numSectors+1,i]+reducedIO[numSectors+3,i])
     xi[i] = (reducedIO[i,numSectors+2] + reducedIO[i,numSectors+3])/(reducedIO[numSectors+1,numSectors+2] + reducedIO[numSectors+1,numSectors+2])
@@ -54,19 +55,41 @@ for i in 1:numSectors
     for j in 1:numSectors
         gammaM[i,j] = reducedIO[j,i]/(reducedIO[j,numSectors+1])
         gammaX[i,j] = reducedCapFlows[j,i]/sum(reducedCapFlows[:,i])
-        MCurrent[i,j] = reducedIO[i,j]
-        XCurrent[i,j] = reducedCapFlows[i,j]
+        #MCurrent[i,j] = reducedIO[i,j]
+        #XCurrent[i,j] = reducedCapFlows[i,j]
+        #constraints below
+        #MCurrentT[i]=MCurrentT[i]+gammaM[i,j]^(1/epsM)*MCurrent[i,j]^((epsM-1)/epsM)
+        #XCurrentT[i]=XCurrentT[i]+gammaX[i,j]^(1/epsX)*XCurrent[i,j]^((epsX-1)/epsX)
     end
-    MCurrentT[i]=sum(reducedIO[:,i])
-    MCurrentT[i]=sum(reducedCapFlows[:,i])
+    #MCurrentT[i]=MCurrent[i]^(epsM/(0.999*epsM-1))
+    #XCurrentT[i]=XCurrent[i]^(epsX/(0.999*epsX-1))
 end
 
 
 modBasic = Model(Ipopt.Optimizer)
-@variable(modBasic, CCurrent)
-@NLobjective(modBasic, Max, sum(beta*(log(sum(xi[j]^(1/epsD)*(deltaC[j]*CCurrent[j])^((epsD-1)/epsD))^(epsD/(epsD*0.999-1)))
--epsLS/(epsLS+1)+sum(LCurrent[j])^((epsLS+1)/epsLS))) for i in 1:numSectors, j in 1:numSectors));
+@variable(modBasic, CCurrent[1:numSectors])
+@variable(modBasic, LCurrent[1:numSectors])
+@variable(modBasic, KCurrent[1:numSectors])
+@variable(modBasic, KNext[1:numSectors])
+@variable(modBasic, KNextNext[1:numSectors])
+@variable(modBasic, MCurrent[1:numSectors,1:numSectors])
+@variable(modBasic, XCurrent[1:numSectors,1:numSectors])
+@variable(modBasic, QCurrent[1:numSectors])
+@NLobjective(modBasic, Min, beta*(log(sum(xi[j]^(1/epsD)*(deltaC[j]*CCurrentMod[j])^((epsD-1)/epsD) for j in 1:numSectors)^(epsD/(epsD*0.99-1)))
+-epsLS/(epsLS+1)+sum(LCurrentMod[i] for i in 1:numSectors)^((epsLS+1)/epsLS)));
+for j in 1:numSectors
+#This constraint directly affects the objective function
+@constraint(modBasic, sum(QCurrent[j]-CCurrentMod[j] - sum(MCurrent[j,:]+XCurrent[j,:])) == 0);
+#This constraint feeds into the other constraint
+@constraint(modBasic, sum(XCurrentT[j]+(1-deltaK)*KCurrent[j]-KNext[j]) == 0);
+@constraint(modBasic, sum((1-deltaK)*KNext[j]-KNextNext[j]) == 0);
 
+@constraint(modBasic, XCurrentT[j]==sum(gammaX[i,j]^(1/epsX)*XCurrent[i,j]^((epsX-1)/epsX) for i in 1:numSectors)^(epsX/(epsX-1)))
+@constraint(modBasic, MCurrentT[j]==sum(gammaM[i,j]^(1/epsX)*MCurrent[i,j]^((epsM-1)/epsM) for i in 1:numSectors)^(epsM/(epsM-1)))
+#impose Q constraint from appendix F.1
+@constraint(modBasic, A[j] etc. etc == QCurrent[j]);
+end
+optimize!(modBasic)
 #=
 lagrange = E0*sum(beta*(log(sum(xi[j]^(1/epsD)*(deltaC[j]*C[j])^((epsD-1)/epsD))^(epsD/(epsD*0.999-1)))
 -epsLS/(epsLS+1)+sum(LCurrent[j])^((epsLS+1)/epsLS)
@@ -76,14 +99,9 @@ lagrange = E0*sum(beta*(log(sum(xi[j]^(1/epsD)*(deltaC[j]*C[j])^((epsD-1)/epsD))
 #=
 constraints:
 
-sum(P[j]*(QCurrent[j]-CCurrent[j] - sum(MCurrent[j,i]+XCurrent[j,i]))) == 0
+sum(QCurrent[j]-CCurrent[j] - sum(MCurrent[j,i]+XCurrent[j,i])) == 0
 
 sum(XCurrentT[j]+(1-deltaK)*KCurrent[j]-Kt+1[j]) == 0
-
-C
-
-
-
 
 FOC's:
 P_t-1 - beta*P*(1-deltaC[j])=beta*xi[j]^(1/epsD)*deltaC[j]^((epsD-1)/epsD)*
