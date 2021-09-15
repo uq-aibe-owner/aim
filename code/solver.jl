@@ -57,13 +57,10 @@ for i in 1:numSectors
         gammaX[i,j] = reducedCapFlows[j,i]/sum(reducedCapFlows[:,i])
         #MCurrent[i,j] = reducedIO[i,j]
         #XCurrent[i,j] = reducedCapFlows[i,j]
-        #constraints below
-        #MCurrentT[i]=MCurrentT[i]+gammaM[i,j]^(1/epsM)*MCurrent[i,j]^((epsM-1)/epsM)
-        #XCurrentT[i]=XCurrentT[i]+gammaX[i,j]^(1/epsX)*XCurrent[i,j]^((epsX-1)/epsX)
     end
-    #MCurrentT[i]=MCurrent[i]^(epsM/(0.999*epsM-1))
-    #XCurrentT[i]=XCurrent[i]^(epsX/(0.999*epsX-1))
 end
+
+A = ones(numSectors);
 
 
 modBasic = Model(Ipopt.Optimizer)
@@ -75,19 +72,19 @@ modBasic = Model(Ipopt.Optimizer)
 @variable(modBasic, MCurrent[1:numSectors,1:numSectors])
 @variable(modBasic, XCurrent[1:numSectors,1:numSectors])
 @variable(modBasic, QCurrent[1:numSectors])
-@NLobjective(modBasic, Min, beta*(log(sum(xi[j]^(1/epsD)*(deltaC[j]*CCurrentMod[j])^((epsD-1)/epsD) for j in 1:numSectors)^(epsD/(epsD*0.99-1)))
--epsLS/(epsLS+1)+sum(LCurrentMod[i] for i in 1:numSectors)^((epsLS+1)/epsLS)));
-for j in 1:numSectors
-#This constraint directly affects the objective function
-@constraint(modBasic, sum(QCurrent[j]-CCurrentMod[j] - sum(MCurrent[j,:]+XCurrent[j,:])) == 0);
-#This constraint feeds into the other constraint
-@constraint(modBasic, sum(XCurrentT[j]+(1-deltaK)*KCurrent[j]-KNext[j]) == 0);
-@constraint(modBasic, sum((1-deltaK)*KNext[j]-KNextNext[j]) == 0);
-
-@constraint(modBasic, XCurrentT[j]==sum(gammaX[i,j]^(1/epsX)*XCurrent[i,j]^((epsX-1)/epsX) for i in 1:numSectors)^(epsX/(epsX-1)))
-@constraint(modBasic, MCurrentT[j]==sum(gammaM[i,j]^(1/epsX)*MCurrent[i,j]^((epsM-1)/epsM) for i in 1:numSectors)^(epsM/(epsM-1)))
-#impose Q constraint from appendix F.1
-@constraint(modBasic, A[j] etc. etc == QCurrent[j]);
+@variable(modBasic, MCurrentT[1:numSectors])
+@variable(modBasic, XCurrentT[1:numSectors])
+@NLobjective(modBasic, Min, beta*(log(sum(xi[j]^(1/epsD)*(deltaC[j]*CCurrent[j])^((epsD-1)/epsD) for j in 1:numSectors)^(epsD/(epsD*0.999-1)))
+-epsLS/(epsLS+1)+sum(LCurrent[i] for i in 1:numSectors)^((epsLS+1)/epsLS)));
+# Market clearing constraint
+@NLconstraint(modBasic, sum(QCurrent[j]-CCurrent[j] - sum(MCurrent[i,j]+XCurrent[i,j] for i in 1:numSectors) for j in 1:numSectors) == 0);
+@NLconstraint(modBasic, sum(XCurrentT[j]+(1-deltaK)*KCurrent[j]-KNext[j] for  j in 1:numSectors) == 0);
+@NLconstraint(modBasic, sum((1-deltaK)*KNext[j]-KNextNext[j] for j in 1:numSectors) == 0);
+for j in 1:numSectors;
+    @NLconstraint(modBasic, XCurrentT[j]==sum(gammaX[i,j]^(1/epsX)*XCurrent[i,j]^((epsX-1)/epsX) for i in 1:numSectors)^(epsX/(epsX-1)));
+    @NLconstraint(modBasic, MCurrentT[j]==sum(gammaM[i,j]^(1/epsX)*MCurrent[i,j]^((epsM-1)/epsM) for i in 1:numSectors)^(epsM/(epsM-1)));
+    #impose Q constraint from appendix F.1
+    @NLconstraint(modBasic, A[j]*((1-mu[j])^(1/epsQ)*((KCurrent[j]/alpha[j])^alpha[j](LCurrent[j]/(1-alpha[j]))^(1-alpha[j]))^((epsQ-1)/eqsQ)+mu[j]^(1/epsQ)*MCurrentT[j]^((epsQ-1)/epsQ))^(epsQ/(0.99*epsQ-1)) == QCurrent[j]);
 end
 optimize!(modBasic)
 #=
