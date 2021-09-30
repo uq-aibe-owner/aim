@@ -1,13 +1,20 @@
+#grid1 = LinRange(grid_min,grid_max,numPoints1D); omega(y) = 5*y; omega_func = LinearInterpolation(grid, omega)
+
+
 using LinearAlgebra, Statistics
-using Plots, QuantEcon, Interpolations, NLsolve, Optim, Random
+using Plots, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools
 #include("reducedIO.jl")
 
-function T(w, grid, β, u, f, shocks; compute_policy = false)
+function T(valGrid, grid, β, u, f; compute_policy = false)
     #generalise to n dimensions
-    applied = w.(grid)
-    w_func = LinearInterpolation(grid, w)
+    #feed this function "grid" which are domain values
+    #below code gives the function image
+    #a way to generalise this to higher numSectors is to index by one value, and alter the formation of "grid" to get the desired order.
+
+    w_func = interpolate(valGrid, BSpline(Linear()))
+    #where knots are vectors use Gridded() instead of BSpline()
     # objective for each grid point
-    objectives = (c -> u(c) + β * mean(w_func.(f(y - c) .* shocks)) for y in grid)
+    objectives = (c -> u(c) + β * mean(w_func.(f(x - c),f(y - c))) for x in numPoints1D, y in numPoints1D)
     results = maximize.(objectives, 1e-10, grid) # solver result for each grid point
 
     Tw = Optim.maximum.(results)
@@ -20,6 +27,28 @@ function T(w, grid, β, u, f, shocks; compute_policy = false)
 end
 
 numSectors = 2;
+
+numPoints1D = 40
+
+grid = Array{Tuple{Float64, Float64}}(undef,(numPoints1D)^numSectors)
+
+grid_max = 4
+grid_min = 0.0
+
+iter=1
+for p in product(LinRange(grid_min,grid_max,numPoints1D),LinRange(grid_min,grid_max,numPoints1D))
+    grid[iter] = p
+    global iter += 1
+end
+
+w(x,y) = 5 * y+x;
+
+valGrid = zeros(numPoints1D,numPoints1D)
+for i in 1:numPoints1D
+    for j in 1:numPoints1D
+        valGrid[i,j] = w(grid[j+(i-1)*numPoints1D][1],grid[j+(i-1)*numPoints1D][2])
+    end
+end
 
 α = 0.4
 β = 0.96
@@ -81,19 +110,7 @@ for n in 1:numSectors
     push!(grid, x)
 end
 =#
-numPoints = 10
-grid = AbstractVector{Tuple{Float64, Float64}}(undef,(numPoints*numSectors)^numSectors)
 
-grid_max = 4
-grid_min = 0.01
-grid_space = (grid_max-grid_min)/numPoints
-i=1
-
-
-for p in product(grid_min:grid_space:grid_max,grid_min:grid_space:grid_max)
-    grid[i] = p
-    i += 1
-end
 
 #=
 grid[j] = 1:numSectors
