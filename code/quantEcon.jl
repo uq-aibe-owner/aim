@@ -10,12 +10,15 @@ function T(valGrid, grid, β, u, f; compute_policy = false)
     #feed this function "grid" which are domain values
     #below code gives the function image
     #a way to generalise this to higher numSectors is to index by one value, and alter the formation of "grid" to get the desired order.
-
+    c = similar(grid[i]) #this should go
     w_func = interpolate(valGrid, BSpline(Linear()))
     #where knots are vectors use Gridded() instead of BSpline()
     # objective for each grid point
-    objectives = (c -> u(c) + β * mean(w_func.(f(x - c),f(y - c))) for x in numPoints1D, y in numPoints1D)
-    results = maximize.(objectives, 1e-10, grid) # solver result for each grid point
+    #make sure to give concave initial functions
+    f.(y-c)
+    #could put next two lines inside loop
+    objectives = (c -> u(c) + β * w_func(f(y[1] - c[1]),f(y[2] - c[2])) for y in grid)
+    results = maximize.(objective, [1e-10, 1e-10], grid ) #c was grid before implementing loop # solver result for each grid point
 
     Tw = Optim.maximum.(results)
     if compute_policy
@@ -25,6 +28,8 @@ function T(valGrid, grid, β, u, f; compute_policy = false)
 
     return Tw
 end
+
+u(c) = log(c[1]^0.5*c[2]^0.5);
 
 numSectors = 2;
 
