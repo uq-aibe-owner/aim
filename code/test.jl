@@ -2,11 +2,16 @@ using LinearAlgebra, Statistics
 using Plots, QuantEcon, Interpolations, NLsolve, Optim, Random
 
 
-function T(w, grid, β, u, f, shocks; compute_policy = false)
-    w_func = LinearInterpolation(grid, w)
+function T(w, grid, β, u, f; compute_policy = false)
+    w_func = w
     # objective for each grid point
-    objectives = (c -> u(c) + β * w_func(f(y - c)) for y in grid)
-    results = maximize.(objectives, 1e-10, grid) # solver result for each grid point
+    objectives(c) = u(c) + β * mean(w_func.(f(c)))
+    global bobjectives = objectives
+    #println("here's the objectives")
+    #println(objectives)
+    results = maximize(objectives, 1e-10, grid) # solver result for each grid point
+    global besults = results
+    #println(results)
 
     Tw = Optim.maximum.(results)
     if compute_policy
@@ -49,10 +54,10 @@ grid_max = 4         # Largest grid point
 grid_size = 200      # Number of grid points
 shock_size = 250     # Number of shock draws in Monte Carlo integral
 
-grid_y = range(1e-5,  grid_max, length = grid_size)
-shocks = exp.(μ .+ s * randn(shock_size))
-w = T(v.(grid_y), grid_y, β, log, k -> k^α, shocks) 
-plt = plot(ylim = (-35,-24))
+grid = 4#range(1e-5,  grid_max, length = grid_size)
+shocks = 0 #exp.(μ .+ s * randn(shock_size))
+w = T(v(grid), grid, β, log, k -> k^α) 
+#=plt = plot(ylim = (-35,-24))
 plot!(plt, grid_y, w, linewidth = 2, alpha = 0.6, label = "T(v)")
 plot!(plt, v_star, grid_y, linewidth = 2, alpha=0.6, label = "v_star")
-plot!(plt, legend = :bottomright)
+plot!(plt, legend = :bottomright)=#

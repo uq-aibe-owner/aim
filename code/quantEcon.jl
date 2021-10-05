@@ -2,51 +2,82 @@
 
 
 using LinearAlgebra, Statistics
-using Plots, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools
+using Plots, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
 #include("reducedIO.jl")
 
-function T(valGrid, grid, β, u, f; compute_policy = false)
-    #generalise to n dimensions
-    #feed this function "grid" which are domain values
-    #below code gives the function image
-    #a way to generalise this to higher numSectors is to index by one value, and alter the formation of "grid" to get the desired order.
-    c = similar(grid[i]) #this should go
-    w_func = interpolate(valGrid, BSpline(Linear()))
-    #where knots are vectors use Gridded() instead of BSpline()
-    # objective for each grid point
-    #make sure to give concave initial functions
-    f.(y-c)
-    #could put next two lines inside loop
-    objectives = (c -> u(c) + β * w_func(f(y[1] - c[1]),f(y[2] - c[2])) for y in grid)
-    results = maximize.(objective, [1e-10, 1e-10], grid ) #c was grid before implementing loop # solver result for each grid point
+u(x) = sum(log.(x))
+w(x)=5*log.(x)
+β = 0.96
+α = 0.4
+f(x) = x.^α
 
-    Tw = Optim.maximum.(results)
-    if compute_policy
-        σ = Optim.maximizer.(results)
-        return Tw, σ 
-        end
-
-    return Tw
-end
-
-u(c) = log(c[1]^0.5*c[2]^0.5);
-
-numSectors = 2;
+numSectors = 2
 
 numPoints1D = 40
 
-grid = Array{Tuple{Float64, Float64}}(undef,(numPoints1D)^numSectors)
+grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
 grid_max = 4
 grid_min = 0.0
 
 iter=1
 for p in product(LinRange(grid_min,grid_max,numPoints1D),LinRange(grid_min,grid_max,numPoints1D))
-    grid[iter] = p
+    grid[iter] = collect(p)
     global iter += 1
 end
 
-w(x,y) = 5 * y+x;
+function T(w, grid, β, u, f; compute_policy = false)
+    #generalise to n dimensions
+    #feed this function "grid" which are domain values
+    #below code gives the function image
+    #a way to generalise this to higher numSectors is to index by one value, and alter the formation of "grid" to get the desired order.
+    #w_func = interpolate(valGrid, BSpline(Linear()))
+    #where knots are vectors use Gridded() instead of BSpline()
+    # objective for each grid point
+    #make sure to give concave initial functions
+    #f.(y-c)
+    #could put next two lines inside loop
+    Tw = similar(w.(grid))
+    σ = similar(grid)
+    for n in 1:length(grid)
+        y= grid[n]
+        modTrial = Model(Ipopt.Optimizer);
+        @variable(modTrial, 0<=c[1:numSectors,1])
+        @variable(modTrial, obj)
+        @constraint(obj == u(c)+β*w(f.(y-c)))
+        for i in 1:numSectors
+            @constraint(modTrial, c[i] <= y[i])
+        end
+        @NLobjective(modTrial, Max, obj)
+        optimize!(modTrial)
+        Tw[n] = value(obj)
+        if compute_policy
+            σ[n] = value.(c)
+            return Tw, σ
+        end
+    end
+    
+    return Tw
+    
+end
+
+T(w,LinRange(0,4,100), β, u, f)
+
+#=
+u(c) = log(c[1]^0.5*c[2]^0.5);
+
+numSectors = 2;
+
+
+
+w(x,y) = x^2+y^2;
+
+valGrid = zeros(numPoints1D,numPoints1D)
+for i in 1:numPoints1D
+    for j in 1:numPoints1D
+        valGrid[i,j] = w(grid[j+(i-1)*numPoints1D][1],grid[j+(i-1)*numPoints1D][2])
+    end
+end
 
 valGrid = zeros(numPoints1D,numPoints1D)
 for i in 1:numPoints1D
@@ -174,5 +205,6 @@ cstar = (1 - α * β) * grid_y
 plt = plot(grid_y, σ, lw=2, alpha=0.6, label = "approximate policy function")
 plot!(plt, grid_y, cstar, lw = 2, alpha = 0.6, label = "true policy function")
 plot!(plt, legend = :bottomright)
+=#
 =#
 =#
