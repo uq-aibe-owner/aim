@@ -42,11 +42,11 @@ function T(w, grid, β, u, f; compute_policy = false)
     for n in 1:length(grid)
         y= grid[n]
         modTrial = Model(Ipopt.Optimizer);
-        @variable(modTrial, 0<=c[1:numSectors,1])
-        @variable(modTrial, obj)
-        @constraint(obj == u(c)+β*w(f.(y-c)))
+        @variable(modTrial, 0<=c[1:numsectors], start 0.1)
+        @variable(modTrial, obj, start 0.1)
+        @NLconstraint(obj == u(c)+β*w(f.(y-c)))
         for i in 1:numSectors
-            @constraint(modTrial, c[i] <= y[i])
+            @NLconstraint(modTrial, c[i] <= y[i])
         end
         @NLobjective(modTrial, Max, obj)
         optimize!(modTrial)
