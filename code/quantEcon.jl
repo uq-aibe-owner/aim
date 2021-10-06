@@ -5,20 +5,20 @@ using LinearAlgebra, Statistics
 using Plots, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
 #include("reducedIO.jl")
 
-u(x) = sum(log.(x))
-w(x)=5*log.(x)
+u(x) = sum(log(x[i]) for i in 1:numSectors)
+w(x)=sum(5*log(x[i]) for i in 1:numSectors)
 β = 0.96
 α = 0.4
 f(x) = x.^α
 
 numSectors = 2
 
-numPoints1D = 40
+numPoints1D = 2
 
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
 grid_max = 4
-grid_min = 0.0
+grid_min = 1
 
 iter=1
 for p in product(LinRange(grid_min,grid_max,numPoints1D),LinRange(grid_min,grid_max,numPoints1D))
@@ -26,7 +26,7 @@ for p in product(LinRange(grid_min,grid_max,numPoints1D),LinRange(grid_min,grid_
     global iter += 1
 end
 
-function T(w, grid, β, u, f; compute_policy = false)
+function T(grid, β, f; compute_policy = false)
     #generalise to n dimensions
     #feed this function "grid" which are domain values
     #below code gives the function image
@@ -37,20 +37,18 @@ function T(w, grid, β, u, f; compute_policy = false)
     #make sure to give concave initial functions
     #f.(y-c)
     #could put next two lines inside loop
-    Tw = similar(w.(grid))
+    Tw = zeros(length(grid))
     σ = similar(grid)
     for n in 1:length(grid)
-        y= grid[n]
+        y = grid[n]
         modTrial = Model(Ipopt.Optimizer);
-        @variable(modTrial, 0<=c[1:numsectors], start 0.1)
-        @variable(modTrial, obj, start 0.1)
-        @NLconstraint(obj == u(c)+β*w(f.(y-c)))
+        @variable(modTrial,  c[1:numSectors])
         for i in 1:numSectors
-            @NLconstraint(modTrial, c[i] <= y[i])
+            @constraint(modTrial, 0.99*grid_min <= c[i] <= 0.999*y[i])
         end
-        @NLobjective(modTrial, Max, obj)
+        @NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*sum(5*log(f(y[i]-c[i])) for i in 1:numSectors))
         optimize!(modTrial)
-        Tw[n] = value(obj)
+        Tw[n] = JuMP.objective_value(modTrial)
         if compute_policy
             σ[n] = value.(c)
             return Tw, σ
@@ -61,8 +59,8 @@ function T(w, grid, β, u, f; compute_policy = false)
     
 end
 
-T(w,LinRange(0,4,100), β, u, f)
 
+wUp=T(grid, β, f)
 #=
 u(c) = log(c[1]^0.5*c[2]^0.5);
 
