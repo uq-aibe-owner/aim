@@ -1,12 +1,11 @@
-#grid1 = LinRange(grid_min,grid_max,numPoints1D); omega(y) = 5*y; omega_func = LinearInterpolation(grid, omega)
+#grid1 = LinRange(gridMin,gridMax,numPoints1D); omega(y) = 5*y; omega_func = LinearInterpolation(grid, omega)
 
 
-using LinearAlgebra, Statistics
+using MathOptInterface, LinearAlgebra, Statistics
 using Plots, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
 #include("reducedIO.jl")
 
 u(x) = sum(log(x[i]) for i in 1:numSectors)
-w(x)=sum(5*log(x[i]) for i in 1:numSectors)
 β = 0.96
 α = 0.4
 f(x) = x.^α
@@ -17,16 +16,18 @@ numPoints1D = 2
 
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
-grid_max = 4
-grid_min = 1
+gridMax = 4
+gridMin = 1
 
 iter=1
-for p in product(LinRange(grid_min,grid_max,numPoints1D),LinRange(grid_min,grid_max,numPoints1D))
+for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(grid_min,grid_max,numPoints1D))
     grid[iter] = collect(p)
     global iter += 1
 end
 
-function T(grid, β, f; compute_policy = false)
+wVal = [sum(5*log.(grid[i])) for i in 1:(numPoints1D)^numSectors]
+
+function T(w, grid, β, f ; compute_policy = false)
     #generalise to n dimensions
     #feed this function "grid" which are domain values
     #below code gives the function image
@@ -35,18 +36,21 @@ function T(grid, β, f; compute_policy = false)
     #where knots are vectors use Gridded() instead of BSpline()
     # objective for each grid point
     #make sure to give concave initial functions
-    #f.(y-c)
-    #could put next two lines inside loop
+    w_func = LinearInterpolation.(grid, wVal)
     Tw = zeros(length(grid))
     σ = similar(grid)
     for n in 1:length(grid)
         y = grid[n]
         modTrial = Model(Ipopt.Optimizer);
         @variable(modTrial,  c[1:numSectors])
+	@variable(modTrial, k[1:numSectors])
         for i in 1:numSectors
-            @constraint(modTrial, 0.99*grid_min <= c[i] <= 0.999*y[i])
+            @constraint(modTrial, 0.99*gridMin <= c[i] <= 0.999*y[i])
+	    @constraint(modTrial, k[i] == y[i] - c[i])
         end
-        @NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*sum(5*log(f(y[i]-c[i])) for i in 1:numSectors))
+	register(modTrial, :w_func, numSectors, w_func; autodiff = true)
+	register(modTrial, :f, 1, f; autodiff = true)
+	NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*w_func(f.(k...)))
         optimize!(modTrial)
         Tw[n] = JuMP.objective_value(modTrial)
         if compute_policy
@@ -60,7 +64,7 @@ function T(grid, β, f; compute_policy = false)
 end
 
 
-wUp=T(grid, β, f)
+wVal = T(w, grid, β, f)
 #=
 u(c) = log(c[1]^0.5*c[2]^0.5);
 
@@ -155,7 +159,7 @@ g         # Largest grid point
 grid_size = 200      # Number of grid points
 shock_size = [250,250]     # Number of shock draws in Monte Carlo integral
 
-grid_y = range.(1e-5,  grid_max, length = grid_size)
+grid_y = range.(1e-5,  gridMax, length = grid_size)
 shocks = exp.(μ .+ s * randn(shock_size))
 w = T(v_star.(grid_y), grid_y, β, (log∘sum), k -> k^α, shocks)
 
