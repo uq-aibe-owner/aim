@@ -1,14 +1,8 @@
-#grid1 = LinRange(gridMin,gridMax,numPoints1D); omega(y) = 5*y; omega_func = LinearInterpolation(grid, omega)
-
-
-using MathOptInterface, LinearAlgebra, Statistics
-using Plots, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt, MathOptInterface;
-#include("reducedIO.jl")
+using MathOptInterface, LinearAlgebra, Statistics, Plots, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt, MathOptInterface;
 
 u(x) = sum(log(x[i]) for i in 1:numSectors)
 w(x) = sum(5*log(x[i]) for i in 1:numSectors)
 
-initFunc(x) = sum(log)
 β = 0.96
 α = 0.4
 f(x) = x^α
@@ -19,9 +13,8 @@ numPoints1D = 2
 
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
-gridMax = 2
-gridMin = 1
-
+gridMax = 1
+gridMin = 0
 
 iter=1
 for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
@@ -31,16 +24,11 @@ end
 
 wVal = w.(grid)
     
+function interp(x,y)
+    return interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
+end
 
 function T(wVal, grid, β, f ; compute_policy = false)
-    #generalise to n dimensions
-    #feed this function "grid" which are domain values
-    #below code gives the function image
-    #a way to generalise this to higher numSectors is to index by one value, and alter the formation of "grid" to get the desired order.
-    #w_func = interpolate(valGrid, BSpline(Linear()))
-    #where knots are vectors use Gridded() instead of BSpline()
-    # objective for each grid point
-    #make sure to give concave initial functions
 
     wVals = zeros(numPoints1D,numPoints1D);
     for j in numPoints1D
@@ -48,16 +36,15 @@ function T(wVal, grid, β, f ; compute_policy = false)
             wVals[i,j] = wVal[i+(i-1)*j]
         end
     end
-    function wFunc(x,y)
-        return interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
-    end
+    wFunc(x, y) = interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
+
     Tw = zeros(length(grid))
     σ = similar(grid)
     for n in 1:length(grid)
         y = grid[n]
         modTrial = Model(Ipopt.Optimizer);
-        @variable(modTrial,  c[1:numSectors])
-        @variable(modTrial, k[1:numSectors], start=1.5)
+        @variable(modTrial,  c[1:numSectors] >= 0.0001)
+        @variable(modTrial, k[1:numSectors] >= 0.0001, start=0.5)
         for i in 1:numSectors
             @constraint(modTrial, 0.99*gridMin <= c[i] <= 0.999*y[i])
 	    @constraint(modTrial, k[i] == y[i] - c[i])
