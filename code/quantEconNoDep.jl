@@ -13,8 +13,8 @@ numPoints1D = 2
 
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
-gridMax = 1.0
-gridMin = 0.01
+gridMax = 3
+gridMin = 1
 
 iter=1
 for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
@@ -44,7 +44,7 @@ function T(wVal, grid, β, f ; compute_policy = false)
         y = grid[n]
         modTrial = Model(Ipopt.Optimizer);
         @variable(modTrial,  c[1:numSectors] >= 0.0001)
-        @variable(modTrial, k[1:numSectors] >= 0.0001, start=0.5)
+        @variable(modTrial, k[1:numSectors] >= 0.0001, start=2)
         for i in 1:numSectors
             @constraint(modTrial, gridMin <= c[i] <= y[i])
 	    @constraint(modTrial, k[i] == y[i] - c[i])

@@ -9,12 +9,12 @@ f(x) = x^α
 
 numSectors = 2
 
-numPoints1D = 2
+numPoints1D = 4
 
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
-gridMax = 1
-gridMin = 0
+gridMax = 5
+gridMin = 0.3
 
 iter=1
 for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
@@ -28,7 +28,7 @@ function interp(x,y)
     return interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
 end
 
-function T(wVal, grid, β, f, prevK ; compute_policy = false)
+function T(wVal, grid, β, f ; compute_policy = false)
 
     wVals = zeros(numPoints1D,numPoints1D);
     for j in numPoints1D
@@ -38,16 +38,20 @@ function T(wVal, grid, β, f, prevK ; compute_policy = false)
     end
     wFunc(x, y) = interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
 
-    Tw = zeros(length(grid))
-    σ = similar(grid)
+    global Tw = zeros(length(grid))
+    global σ = similar(grid)
+    global intK = similar(grid)
     for n in 1:length(grid)
         y = grid[n]
+        prevK = y.^(1/α)
+
         modTrial = Model(Ipopt.Optimizer);
         @variable(modTrial,  c[1:numSectors] >= 0.0001)
-        @variable(modTrial, k[1:numSectors] >= 0.0001, start=0.5)
+        @variable(modTrial, k[1:numSectors] >= gridMin*1.0001)
+        setvalue.(k, prevK)      
         for i in 1:numSectors
-            @constraint(modTrial, 0.99*gridMin <= c[i] <= 0.999*y[i])
-	    @constraint(modTrial, k[i] == y[i] - c[i] + (1-δk)*prevK[i])
+            @constraint(modTrial, gridMin <= c[i] <= y[i])
+            @constraint(modTrial, k[i] == y[i] - c[i] + (1-δk)*prevK[i])
         end
         register(modTrial, :wFunc, 2, wFunc; autodiff = true)
         register(modTrial, :f, 1, f; autodiff = true)
@@ -57,9 +61,10 @@ function T(wVal, grid, β, f, prevK ; compute_policy = false)
         if compute_policy
             σ[n] = value.(c)
         end
+        global intK[n] = value.(k)
     end
 
-    global prevK = k
+    global prevK = intK
 
     if compute_policy
         return Tw, σ
@@ -69,9 +74,8 @@ function T(wVal, grid, β, f, prevK ; compute_policy = false)
     
 end
 
-
-prevK = [2,3]
-wVal = T(wVal, grid, β, f, prevK; compute_policy = true)
+δk = 0.1
+wVal = T(wVal, grid, β, f; compute_policy = true)
 #=
 u(c) = log(c[1]^0.5*c[2]^0.5);
 
