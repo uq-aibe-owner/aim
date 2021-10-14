@@ -14,13 +14,12 @@ import Pkg; Pkg.add("Ipopt")=#
 using MathOptInterface, LinearAlgebra, Statistics, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
 
 u(x) = sum(log(x[i]) for i in 1:numSectors)
-w(x) = sum(log(x[i]) for i in 1:numSectors)
+w(x) = sum(5*log(x[i]) for i in 1:numSectors)
 
 β = 0.96
 α = 0.4
-f(x,m) = x^α*m^(1-α)
-γx = 0.5
-γm = 0.5
+f(x) = x^α
+γ = 0.5
 
 numSectors = 2 
 numPoints1D = 4
@@ -66,25 +65,21 @@ function T(wVal, grid, β, f ; compute_policy = false)
         @variable(modTrial, k[1:numSectors])
         @variable(modTrial, x[1:numSectors, 1:numSectors]>=0.0001)
         @variable(modTrial, xSum[1:numSectors]>=0.0001)
-        @variable(modTrial, m[1:numSectors, 1:numSectors]>=0.0001)
-        @variable(modTrial, mSum[1:numSectors]>=0.0001)
         setvalue.(k, prevK)      
         for i in 1:numSectors
             @constraint(modTrial, gridMin <= c[i] <= y[i])
             @constraint(modTrial, k[i] == xSum[i] + (1-δk)*prevK[i])
         end
-        @NLconstraint(modTrial, xSum[1] == x[1,1]^γx*x[2,1]^(1-γx))
-        @NLconstraint(modTrial, xSum[2] == x[1,2]^γx*x[2,2]^(1-γx))
-        @NLconstraint(modTrial, mSum[1] == m[1,1]^γm*m[2,1]^(1-γm))
-        @NLconstraint(modTrial, mSum[2] == m[1,2]^γm*m[2,2]^(1-γm))
-        @constraint(modTrial, x[1,1] == y[1] - c[1] -sum(m[1,:]) - x[1,2])
-        @constraint(modTrial, x[2,2] == y[2] - c[2] -sum(m[2,:]) - x[2,1])
-        @constraint(modTrial, x[1,2] == y[1] - c[1] -sum(m[1,:]) - x[1,1])
-        @constraint(modTrial, x[2,1] == y[2] - c[2] -sum(m[2,:]) - x[2,2])
+        @NLconstraint(modTrial, xSum[1] == x[1,1]^γ*x[2,1]^(1-γ))
+        @NLconstraint(modTrial, xSum[2] == x[1,2]^γ*x[2,2]^(1-γ))
+        @constraint(modTrial, x[1,1] == y[1] - c[1] - x[1,2])
+        @constraint(modTrial, x[2,2] == y[2] - c[2] - x[2,1])
+        @constraint(modTrial, x[1,2] == y[1] - c[1] - x[1,1])
+        @constraint(modTrial, x[2,1] == y[2] - c[2] - x[2,2])
 
         register(modTrial, :wFunc, 2, wFunc; autodiff = true)
-        register(modTrial, :f, 2, f; autodiff = true)
-        @NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*wFunc(f(k[1],mSum[1]),f(k[2],mSum[2])))
+        register(modTrial, :f, 1, f; autodiff = true)
+        @NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*wFunc(f(k[1]),f(k[2])))
         optimize!(modTrial)
         Tw[n] = JuMP.objective_value(modTrial)
         if compute_policy
