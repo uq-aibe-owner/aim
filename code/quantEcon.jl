@@ -7,14 +7,14 @@ w(x) = sum(5*log(x[i]) for i in 1:numSectors)
 α = 0.4
 f(x) = x^α
 
-numSectors = 2
+numSectors = 2 
 
-numPoints1D = 2
+numPoints1D = 2 
 
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
 gridMax = 5
-gridMin = 0.3
+gridMin = 1
 gridHood = 0.3
 
 iter=1
@@ -35,7 +35,7 @@ wVals = zeros(numPoints1D,numPoints1D);
 itp = interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))
 
 function interp(x,y)
-    return extrapolate(itp, Flat)(x,y)
+	return extrapolate(itp, Interpolations.Flat())(x,y)
 end
 
 function T(wVal, grid, β, f ; compute_policy = false)
@@ -46,7 +46,7 @@ function T(wVal, grid, β, f ; compute_policy = false)
             wVals[i,j] = wVal[i+(i-1)*j]
         end
     end
-    wFunc(x, y) = extrapolate(interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear())), extrapolation_bc=Flat())(x,y)
+    wFunc(x, y) = extrapolate(interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear())), Interpolations.Flat())(x,y)
 
     global Tw = zeros(length(grid))
     global σ = similar(grid)
