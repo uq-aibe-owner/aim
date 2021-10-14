@@ -1,4 +1,4 @@
-using MathOptInterface, LinearAlgebra, Statistics, Plots, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt, MathOptInterface;
+using MathOptInterface, LinearAlgebra, Statistics, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt, MathOptInterface;
 
 u(x) = sum(log(x[i]) for i in 1:numSectors)
 w(x) = sum(5*log(x[i]) for i in 1:numSectors)
@@ -9,12 +9,13 @@ f(x) = x^α
 
 numSectors = 2
 
-numPoints1D = 4
+numPoints1D = 2
 
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
 gridMax = 5
 gridMin = 0.3
+gridHood = 0.3
 
 iter=1
 for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
@@ -24,8 +25,17 @@ end
 
 wVal = w.(grid)
     
+wVals = zeros(numPoints1D,numPoints1D);
+    for j in numPoints1D
+        for i in numPoints1D
+            wVals[i,j] = wVal[i+(i-1)*j]
+        end
+    end
+
+itp = interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))
+
 function interp(x,y)
-    return interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
+    return extrapolate(itp, Flat)(x,y)
 end
 
 function T(wVal, grid, β, f ; compute_policy = false)
@@ -36,7 +46,7 @@ function T(wVal, grid, β, f ; compute_policy = false)
             wVals[i,j] = wVal[i+(i-1)*j]
         end
     end
-    wFunc(x, y) = interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
+    wFunc(x, y) = extrapolate(interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear())), extrapolation_bc=Flat())(x,y)
 
     global Tw = zeros(length(grid))
     global σ = similar(grid)
@@ -47,7 +57,7 @@ function T(wVal, grid, β, f ; compute_policy = false)
 
         modTrial = Model(Ipopt.Optimizer);
         @variable(modTrial,  c[1:numSectors] >= 0.0001)
-        @variable(modTrial, k[1:numSectors] >= gridMin*1.0001)
+        @variable(modTrial, k[1:numSectors])
         setvalue.(k, prevK)      
         for i in 1:numSectors
             @constraint(modTrial, gridMin <= c[i] <= y[i])
