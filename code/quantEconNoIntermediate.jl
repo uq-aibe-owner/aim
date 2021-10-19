@@ -27,7 +27,7 @@ numPoints1D = 4
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
 gridMax = 5
-gridMin = 1
+gridMin = 0.0001
 gridHood = 0
 
 iter=1
@@ -39,9 +39,9 @@ end
 wVal = w.(grid)
     
 wVals = zeros(numPoints1D,numPoints1D);
-for j in numPoints1D
-    for i in numPoints1D
-        wVals[i,j] = wVal[i+(i-1)*j]
+for j in 1:numPoints1D
+    for i in 1:numPoints1D
+        wVals[i,j] = wVal[i+numPoints1D*(j-1)]
     end
 end
 

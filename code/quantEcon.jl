@@ -23,13 +23,12 @@ f(x,m) = x^α*m^(1-α)
 γm = 0.5
 
 numSectors = 2 
-numPoints1D = 20 
+numPoints1D = 4 
 
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
 gridMax = 5
 gridMin = 1
-gridHood = 0
 
 iter=1
 for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
@@ -40,18 +39,18 @@ end
 wVal = w.(grid)
     
 wVals = zeros(numPoints1D,numPoints1D);
-for j in numPoints1D
-    for i in numPoints1D
-        wVals[i,j] = wVal[i+(i-1)*j]
+for j in 1:numPoints1D
+    for i in 1:numPoints1D
+        wVals[i,j] = wVal[i+numPoints1D*(j-1)]
     end
 end
 
 
 function T(wVal, grid, β, f ; compute_policy = false)
     wVals = zeros(numPoints1D,numPoints1D);
-    for j in numPoints1D
-        for i in numPoints1D
-            wVals[i,j] = wVal[i+(i-1)*j]
+    for j in 1:numPoints1D
+        for i in 1:numPoints1D
+            wVals[i,j] = wVal[i+numPoints1D*(j-1)]
         end
     end
     wFunc(x, y) = extrapolate(interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear())), Interpolations.Flat())(x,y)
@@ -100,12 +99,14 @@ function T(wVal, grid, β, f ; compute_policy = false)
 end
 
 δk = 0.1
+wVal = T(wVal, grid, β, f; compute_policy = true)
+#=
 #wVal = T(wVal, grid, β, f; compute_policy = true)
 function solveOptGrowth(initial_w; tol = 1e-6, max_iter = 500)
     fixedpoint(w -> T(wVal, grid, β, f), initial_w).zero # gets returned
 end
 vStarApprox = solveOptGrowth(wVal)
-#=
+
 u(c) = log(c[1]^0.5*c[2]^0.5);
 
 numSectors = 2;
