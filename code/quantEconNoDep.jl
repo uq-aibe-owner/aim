@@ -17,27 +17,42 @@ gridMax = 3
 gridMin = 1
 
 iter=1
+if numSectors == 1
+	grid = LinRange(gridMin, gridMax, numPoints1D)
+elseif numSectors == 2
 for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
     grid[iter] = collect(p)
     global iter += 1
 end
-
+else
+	print("Currently we only allow one or two sectors")
+end
 wVal = w.(grid)
     
 function interp(x,y)
-    return interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
+    return interpolate((LinRange(gridMin,gridMaxnumPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
 end
 
 function T(wVal, grid, β, f ; compute_policy = false)
-
-    wVals = zeros(numPoints1D,numPoints1D);
-    for j in numPoints1D
-        for i in numPoints1D
-            wVals[i,j] = wVal[i+(i-1)*j]
-        end
-    end
-    wFunc(x, y) = interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear()))(x,y)
-
+	if numSectors == 1
+		wVals = zeros(numPoints1D)
+		wVals = wVal
+		wFunc(y) = interpolate(grid)
+	elseif numSectors == 2
+		wVals = zeros(numPoints1D,numPoints1D);
+		for j in numPoints1D
+		    for i in numPoints1D
+                        wVals[i,j] = wVal[i+(i-1)*j]
+                    end
+                end
+		wFunc(x,y) = log(x) + log(y)
+		#wFunc(x, y) = interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)),			  wVals, Gridded(Linear()))(x,y)
+		print("wFunc created")
+		print(wFunc(1.5,1.5))
+	else
+		print("Can only handle upto 2 sectors")
+	end
+    print(wFunc(1.5, 1.5))
     global Tw = zeros(length(grid))
     global σ = similar(grid)
     for n in 1:length(grid)
@@ -49,9 +64,15 @@ function T(wVal, grid, β, f ; compute_policy = false)
             @constraint(modTrial, gridMin <= c[i] <= y[i])
 	    @constraint(modTrial, k[i] == y[i] - c[i])
         end
-        register(modTrial, :wFunc, 2, wFunc; autodiff = true)
+        register(modTrial, :wFunc, numSectors, wFunc; autodiff = true)
         register(modTrial, :f, 1, f; autodiff = true)
+	if numSectors == 1
+		@NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*wFunc(f(k[1])))
+	elseif numSectors == 2 
         @NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*wFunc(f(k[1]),f(k[2])))
+	else
+	print("check the number of sectors")
+	end
         optimize!(modTrial)
         Tw[n] = JuMP.objective_value(modTrial)
         if compute_policy
@@ -67,11 +88,11 @@ function T(wVal, grid, β, f ; compute_policy = false)
 end
 
 
-wVal = T(wVal, grid, β, f; compute_policy = true)
+wVal = T(wVal, grid, β, f; compute_policy = false)
 #=
 u(c) = log(c[1]^0.5*c[2]^0.5);
 
-numSectors = 2;
+numSectors == 2;
 
 
 

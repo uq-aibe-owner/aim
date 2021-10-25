@@ -13,47 +13,34 @@ import Pkg; Pkg.add("Ipopt")=#
 
 using MathOptInterface, LinearAlgebra, Statistics, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
 
-u(x) = sum(log(x[i]) for i in 1:numSectors)
-w(x) = sum(log(x[i]) for i in 1:numSectors)
 
 β = 0.96
 α = 0.4
 f(x,m) = x^α*m^(1-α)
 γx = 0.5
 γm = 0.5
-
+δk = .85
 numSectors = 2 
 numPoints1D = 4 
-
-grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
-
 gridMax = 5
 gridMin = 1
 
+u(x) = sum(log(x[i]) for i in 1:numSectors)/(1-β)
+w(x) = sum(log(x[i]) for i in 1:numSectors)
+grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
+
+#=
 iter=1
 for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
     grid[iter] = collect(p)
     global iter += 1
 end
-
-wVal = w.(grid)
+=#
+#wval = w.(grid)
     
-wVals = zeros(numPoints1D,numPoints1D);
-for j in 1:numPoints1D
-    for i in 1:numPoints1D
-        wVals[i,j] = wVal[i+numPoints1D*(j-1)]
-    end
-end
 
+function initT(w, grid, β, f ; compute_policy = false)
 
-function T(wVal, grid, β, f ; compute_policy = false)
-    wVals = zeros(numPoints1D,numPoints1D);
-    for j in 1:numPoints1D
-        for i in 1:numPoints1D
-            wVals[i,j] = wVal[i+numPoints1D*(j-1)]
-        end
-    end
-    wFunc(x, y) = extrapolate(interpolate((LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D)), wVals, Gridded(Linear())), Interpolations.Flat())(x,y)
     global Tw = zeros(length(grid))
     global σ = similar(grid)
     global intK = similar(grid)
@@ -67,23 +54,25 @@ function T(wVal, grid, β, f ; compute_policy = false)
         @variable(modTrial, xSum[1:numSectors]>=0.0001)
         @variable(modTrial, m[1:numSectors, 1:numSectors]>=0.0001)
         @variable(modTrial, mSum[1:numSectors]>=0.0001)
-        setvalue.(k, prevK)      
+        @variable(modTrial, f[1:numSectors] >= 0.00001)
+
+        setvalue.(k, prevK)
         for i in 1:numSectors
             @constraint(modTrial, gridMin <= c[i] <= y[i])
             @constraint(modTrial, k[i] == xSum[i] + (1-δk)*prevK[i])
         end
+        @constraint(modTrial, 0 == y[1] - c[1] - sum(m[1,:]) - sum(x[1,:]))
+        @constraint(modTrial, 0 == y[2] - c[2] -sum(m[2,:]) - sum(x[2,:]))
         @NLconstraint(modTrial, xSum[1] == x[1,1]^γx*x[2,1]^(1-γx))
         @NLconstraint(modTrial, xSum[2] == x[1,2]^γx*x[2,2]^(1-γx))
         @NLconstraint(modTrial, mSum[1] == m[1,1]^γm*m[2,1]^(1-γm))
         @NLconstraint(modTrial, mSum[2] == m[1,2]^γm*m[2,2]^(1-γm))
-        @constraint(modTrial, x[1,1] == y[1] - c[1] -sum(m[1,:]) - x[1,2])
-        @constraint(modTrial, x[2,2] == y[2] - c[2] -sum(m[2,:]) - x[2,1])
-        @constraint(modTrial, x[1,2] == y[1] - c[1] -sum(m[1,:]) - x[1,1])
-        @constraint(modTrial, x[2,1] == y[2] - c[2] -sum(m[2,:]) - x[2,2])
+        @NLconstraint(modTrial, f[1] == (k[1]^μ * mSum[1]^μ))
+        @NLconstraint(modTrial, f[2] == (k[2]^μ * mSum[2]^μ))
 
-        register(modTrial, :wFunc, 2, wFunc; autodiff = true)
-        register(modTrial, :f, 2, f; autodiff = true)
-        @NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*wFunc(f(k[1],mSum[1]),f(k[2],mSum[2])))
+        register(modTrial, :w, 2, w; autodiff = true)
+#        register(modTrial, :f, 2, f; autodiff = true)
+        @NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*w(f[1],f[2]))
         optimize!(modTrial)
         Tw[n] = JuMP.objective_value(modTrial)
         if compute_policy
@@ -98,19 +87,18 @@ function T(wVal, grid, β, f ; compute_policy = false)
     return Tw
 end
 
-δk = 0.1
-wVal = T(wVal, grid, β, f; compute_policy = true)
-#=
 #wVal = T(wVal, grid, β, f; compute_policy = true)
+w = initT(w, grid, β, f; compute_policy = true)
+
 function solveOptGrowth(initial_w; tol = 1e-6, max_iter = 500)
     fixedpoint(w -> T(wVal, grid, β, f), initial_w).zero # gets returned
 end
 vStarApprox = solveOptGrowth(wVal)
 
+#=
 u(c) = log(c[1]^0.5*c[2]^0.5);
 
 numSectors = 2;
-
 
 
 w(x,y) = x^2+y^2;
