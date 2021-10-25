@@ -9,25 +9,25 @@ import Pkg; Pkg.add("Optim")
 import Pkg; Pkg.add("Random")
 import Pkg; Pkg.add("IterTools")
 import Pkg; Pkg.add("JuMP")
-import Pkg; Pkg.add("Ipopt")=#
+import Pkg; Pkg.add("Ipopt")
+import Pkg; Pkg.add("BenchmarkTools")=#
 
-using MathOptInterface, LinearAlgebra, Statistics, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
+using MathOptInterface, BenchmarkTools, LinearAlgebra, Statistics, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
 
 
 δ = .85
 β = 0.96
-α = 0.4
-b = 1/(ϕ^ϕ * (1-ϕ)^(1-ϕ))
+ϕ = 0.5
 ξ = 0.5
 μ = 0.5
-ϕ = .5
 ψ = 1/ϕ
+b = 1/(ϕ^ϕ * (1-ϕ)^(1-ϕ))
 
 
 numSectors = 2
-numPoints1D = 40
-gridMax = 5
-gridMin = 1
+numPoints1D = 10
+gridMax = 50
+gridMin = 10
 
 u(x,y) = (log(x) + log(y))
 wInit(x,y) = (log(x) + log(y))/(1 - β)
@@ -64,19 +64,27 @@ function Targ(w, grid, β ; compute_policy = false)
         @variable(modTrial, mCombp[1:numSectors]>=0.0001)
 
         for i in 1:numSectors
-            @constraint(modTrial, c[i] <= y[i])
-            @NLconstraint(modTrial, y[i] == b * k[i]^ϕ * mComb[i]^(1-ϕ))
-            @constraint(modTrial, kp[i] == xComb[i] + (1-δ) * k[i])
-            @constraint(modTrial, 0 == y[i] - c[i] - sum(m[i,:]) - sum(x[i,:]))
+            @constraint(modTrial, c[i] <= y[i] - .001)
+#            @NLconstraint(modTrial, y[i] == b * k[i]^ϕ * mComb[i]^(1-ϕ))
+#            @constraint(modTrial, kp[i] == xComb[i] + (1-δ) * k[i])
+#            @constraint(modTrial, 0 == y[i] - c[i] - sum(m[i,:]) - sum(x[i,:]))
         end
-        @NLconstraint(modTrial, xComb[1] == x[1,1]^ξ * x[2,1]^(1-ξ))
-        @NLconstraint(modTrial, xComb[2] == x[1,2]^ξ * x[2,2]^(1-ξ))
-        @NLconstraint(modTrial, mComb[1] == m[1,1]^μ * m[2,1]^(1-μ))
-        @NLconstraint(modTrial, mComb[2] == m[1,2]^μ * m[2,2]^(1-μ))
+#        @NLconstraint(modTrial, xComb[1] == x[1,1]^ξ * x[2,1]^(1-ξ))
+#        @NLconstraint(modTrial, xComb[2] == x[1,2]^ξ * x[2,2]^(1-ξ))
+#        @NLconstraint(modTrial, mComb[1] == m[1,1]^μ * m[2,1]^(1-μ))
+#        @NLconstraint(modTrial, mComb[2] == m[1,2]^μ * m[2,2]^(1-μ))
 
-        register(modTrial, :w, 2, w; autodiff = true)
-        register(modTrial, :u, 2, u; autodiff = true)
-        @NLobjective(modTrial, Max, u(c[1],c[2]) + β * w(k[1], k[2]))
+#        register(modTrial, :w, 2, w; autodiff = true)
+#        register(modTrial, :u, 2, u; autodiff = true)
+        @NLobjective(modTrial,
+                     Max,
+                     log(c[1])
+                     + log(c[2])
+                     + β * ξ * log(k[1]^ϕ * (m[1,1]^μ * m[2,1]^(1-μ))^(1-ϕ) - c[1] - x[1,2] - sum(m[1,i] for i in 1:numSectors)) #
+                     + β * (1-ξ) * log(k[2]^ϕ * (m[1,2]^μ * m[2,2]^(1-μ))^(1-ϕ) - c[2] - x[2,2] - sum(m[2,i] for i in 1:numSectors)) #
+                     + β * ξ * log(k[1]^ϕ * (m[1,1]^μ * m[2,1]^(1-μ))^(1-ϕ) - c[1] - x[1,1] - sum(m[1,i] for i in 1:numSectors))
+                     + β * (1-ξ) * log(k[2]^ϕ * (m[1,2]^μ * m[2,2]^(1-μ))^(1-ϕ)- c[2] - x[2,1] -  sum(m[2,i] for i in 1:numSectors))
+                    )
         optimize!(modTrial)
         wTarg[n] = JuMP.objective_value(modTrial)
         if compute_policy
