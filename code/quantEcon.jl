@@ -14,86 +14,89 @@ import Pkg; Pkg.add("Ipopt")=#
 using MathOptInterface, LinearAlgebra, Statistics, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
 
 
+δ = .85
 β = 0.96
 α = 0.4
-f(x,m) = x^α*m^(1-α)
-γx = 0.5
-γm = 0.5
-δk = .85
-numSectors = 2 
+b = 1/(ϕ^ϕ * (1-ϕ)^(1-ϕ))
+ξ = 0.5
+μ = 0.5
+ϕ = .5
+ψ = 1/ϕ
+
+
+numSectors = 2
 numPoints1D = 4 
 gridMax = 5
 gridMin = 1
 
-u(x) = sum(log(x[i]) for i in 1:numSectors)/(1-β)
-w(x) = sum(log(x[i]) for i in 1:numSectors)
+u(x,y) = (log(x) + log(y))
+wInit(x,y) = (log(x) + log(y))/(1 - β)
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
-#=
+
 iter=1
 for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
     grid[iter] = collect(p)
     global iter += 1
 end
-=#
+
 #wval = w.(grid)
     
 
-function initT(w, grid, β, f ; compute_policy = false)
+function Targ(w, grid, β ; compute_policy = false)
 
-    global Tw = zeros(length(grid))
+    global wTarg = zeros(length(grid))
     global σ = similar(grid)
-    global intK = similar(grid)
+    global f = similar(grid)
     for n in 1:length(grid)
-        y = grid[n]
-        prevK = y.^(1/α)
+        k = grid[n]
         modTrial = Model(Ipopt.Optimizer);
         @variable(modTrial,  c[1:numSectors] >= 0.0001)
-        @variable(modTrial, k[1:numSectors])
+        @variable(modTrial, y[1:numSectors] >= 0.0001)
+        @variable(modTrial, kp[1:numSectors]>= 0.0001)
         @variable(modTrial, x[1:numSectors, 1:numSectors]>=0.0001)
-        @variable(modTrial, xSum[1:numSectors]>=0.0001)
+        @variable(modTrial, xComb[1:numSectors]>=0.0001)
         @variable(modTrial, m[1:numSectors, 1:numSectors]>=0.0001)
-        @variable(modTrial, mSum[1:numSectors]>=0.0001)
-        @variable(modTrial, f[1:numSectors] >= 0.00001)
+        @variable(modTrial, mComb[1:numSectors]>=0.0001)
+        @variable(modTrial, mCombp[1:numSectors]>=0.0001)
 
-        setvalue.(k, prevK)
         for i in 1:numSectors
-            @constraint(modTrial, gridMin <= c[i] <= y[i])
-            @constraint(modTrial, k[i] == xSum[i] + (1-δk)*prevK[i])
+            @constraint(modTrial, c[i] <= y[i])
+            @NLconstraint(modTrial, y[i] == b * k[i]^ϕ * mComb[i]^(1-ϕ))
+            @constraint(modTrial, kp[i] == xComb[i] + (1-δ) * k[i])
+            @constraint(modTrial, 0 == y[i] - c[i] - sum(m[i,:]) - sum(x[i,:]))
         end
-        @constraint(modTrial, 0 == y[1] - c[1] - sum(m[1,:]) - sum(x[1,:]))
-        @constraint(modTrial, 0 == y[2] - c[2] -sum(m[2,:]) - sum(x[2,:]))
-        @NLconstraint(modTrial, xSum[1] == x[1,1]^γx*x[2,1]^(1-γx))
-        @NLconstraint(modTrial, xSum[2] == x[1,2]^γx*x[2,2]^(1-γx))
-        @NLconstraint(modTrial, mSum[1] == m[1,1]^γm*m[2,1]^(1-γm))
-        @NLconstraint(modTrial, mSum[2] == m[1,2]^γm*m[2,2]^(1-γm))
-        @NLconstraint(modTrial, f[1] == (k[1]^μ * mSum[1]^μ))
-        @NLconstraint(modTrial, f[2] == (k[2]^μ * mSum[2]^μ))
+        @NLconstraint(modTrial, xComb[1] == x[1,1]^ξ * x[2,1]^(1-ξ))
+        @NLconstraint(modTrial, xComb[2] == x[1,2]^ξ * x[2,2]^(1-ξ))
+        @NLconstraint(modTrial, mComb[1] == m[1,1]^μ * m[2,1]^(1-μ))
+        @NLconstraint(modTrial, mComb[2] == m[1,2]^μ * m[2,2]^(1-μ))
 
         register(modTrial, :w, 2, w; autodiff = true)
-#        register(modTrial, :f, 2, f; autodiff = true)
-        @NLobjective(modTrial, Max, sum(log(c[i]) for i in 1:numSectors) + β*w(f[1],f[2]))
+        register(modTrial, :u, 2, u; autodiff = true)
+        @NLobjective(modTrial, Max, u(c[1],c[2]) + β * w(k[1], k[2]))
         optimize!(modTrial)
-        Tw[n] = JuMP.objective_value(modTrial)
+        wTarg[n] = JuMP.objective_value(modTrial)
         if compute_policy
             σ[n] = value.(c)
+            f[n] = value.(y)
         end
-        global intK[n] = value.(k)
+#        global intK[n] = value.(f)
     end
-    global prevK = intK
+    #global prevK = intK
     if compute_policy
-        return Tw, σ
+        return wTarg, σ, f
     end
-    return Tw
+    return wTarg
 end
 
-#wVal = T(wVal, grid, β, f; compute_policy = true)
-w = initT(w, grid, β, f; compute_policy = true)
+wTarg, sigmaTarg, fTarg = Targ(wInit, grid, β; compute_policy=true)
 
+#=
 function solveOptGrowth(initial_w; tol = 1e-6, max_iter = 500)
     fixedpoint(w -> T(wVal, grid, β, f), initial_w).zero # gets returned
 end
 vStarApprox = solveOptGrowth(wVal)
+=#
 
 #=
 u(c) = log(c[1]^0.5*c[2]^0.5);
