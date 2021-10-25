@@ -25,7 +25,7 @@ b = 1/(ϕ^ϕ * (1-ϕ)^(1-ϕ))
 
 
 numSectors = 2
-numPoints1D = 4 
+numPoints1D = 40
 gridMax = 5
 gridMin = 1
 
@@ -42,7 +42,10 @@ end
 
 #wval = w.(grid)
     
-
+#the following function generates target values (of the value function) for the ML process
+##note that (unlike Sargent and Stachursky) the grid is written in terms of kapital
+#this simplified the problem substantially as otherwise intermediate variables became dynamic
+##also note that this accepts the smooth function
 function Targ(w, grid, β ; compute_policy = false)
 
     global wTarg = zeros(length(grid))
