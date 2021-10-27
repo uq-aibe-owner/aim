@@ -15,64 +15,63 @@ import Pkg; Pkg.add("BenchmarkTools")=#
 using MathOptInterface, BenchmarkTools, LinearAlgebra, Statistics, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
 
 
-δ = .85
+δ = 0.5
 β = 0.96
 ϕ = 0.5
 ξ = 0.5
+ν = 1 - ξ
 μ = 0.5
 ψ = 1/ϕ
 b = 1/(ϕ^ϕ * (1-ϕ)^(1-ϕ))
 
 
 numSectors = 2
-numPoints1D = 10
+numPoints1D = 5
 gridMax = 50
 gridMin = 10
 
 u(x,y) = (log(x) + log(y))
 wInit(x,y) = (log(x) + log(y))/(1 - β)
-grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
-
-
-iter=1
-for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
-    grid[iter] = collect(p)
-    global iter += 1
+grid = Vector{Float64}[]
+yTarg = Vector{Float64}[]
+sTarg = Vector{Float64}[]
+mTarg = Matrix{Float64}[]
+xTarg = Matrix{Float64}[]
+for p in product(LinRange(gridMin, gridMax, numPoints1D),LinRange(gridMin, gridMax, numPoints1D))
+    push!(grid, collect(p))
+#    push!(mTarg, zeros(numSectors, numSectors))
 end
-
+wTarg = Float64[]
 #wval = w.(grid)
-    
+
 #the following function generates target values (of the value function) for the ML process
 ##note that (unlike Sargent and Stachursky) the grid is written in terms of kapital
 #this simplified the problem substantially as otherwise intermediate variables became dynamic
 ##also note that this accepts the smooth function
 function Targ(w, grid, β ; compute_policy = false)
 
-    global wTarg = zeros(length(grid))
-    global σ = similar(grid)
-    global f = similar(grid)
     for n in 1:length(grid)
         k = grid[n]
+
         modTrial = Model(Ipopt.Optimizer);
         @variable(modTrial,  c[1:numSectors] >= 0.0001)
-        @variable(modTrial, y[1:numSectors] >= 0.0001)
-        @variable(modTrial, kp[1:numSectors]>= 0.0001)
-        @variable(modTrial, x[1:numSectors, 1:numSectors]>=0.0001)
-        @variable(modTrial, xComb[1:numSectors]>=0.0001)
-        @variable(modTrial, m[1:numSectors, 1:numSectors]>=0.0001)
-        @variable(modTrial, mComb[1:numSectors]>=0.0001)
-        @variable(modTrial, mCombp[1:numSectors]>=0.0001)
+        @variable(modTrial,  y[1:numSectors] >= 0.0001)
+        @variable(modTrial, kp[1:numSectors] >= 0.0001)
+        @variable(modTrial,  x[1:numSectors, 1:numSectors]>= 0.0001)
+        @variable(modTrial,  m[1:numSectors, 1:numSectors]>= 0.0001)
+        @variable(modTrial, xComb[1:numSectors]>= 0.0001)
+        @variable(modTrial, mComb[1:numSectors]>= 0.0001)
 
         for i in 1:numSectors
-            @constraint(modTrial, c[i] <= y[i] - .001)
-#            @NLconstraint(modTrial, y[i] == b * k[i]^ϕ * mComb[i]^(1-ϕ))
+#            @constraint(modTrial, c[i] <= y[i] - .001)
+        @NLconstraint(modTrial, y[i] == b * k[i]^ϕ * mComb[i]^(1-ϕ))
 #            @constraint(modTrial, kp[i] == xComb[i] + (1-δ) * k[i])
 #            @constraint(modTrial, 0 == y[i] - c[i] - sum(m[i,:]) - sum(x[i,:]))
         end
 #        @NLconstraint(modTrial, xComb[1] == x[1,1]^ξ * x[2,1]^(1-ξ))
 #        @NLconstraint(modTrial, xComb[2] == x[1,2]^ξ * x[2,2]^(1-ξ))
-#        @NLconstraint(modTrial, mComb[1] == m[1,1]^μ * m[2,1]^(1-μ))
-#        @NLconstraint(modTrial, mComb[2] == m[1,2]^μ * m[2,2]^(1-μ))
+        @NLconstraint(modTrial, mComb[1] == m[1,1]^μ * m[2,1]^(1-μ))
+        @NLconstraint(modTrial, mComb[2] == m[1,2]^μ * m[2,2]^(1-μ))
 
 #        register(modTrial, :w, 2, w; autodiff = true)
 #        register(modTrial, :u, 2, u; autodiff = true)
@@ -80,27 +79,31 @@ function Targ(w, grid, β ; compute_policy = false)
                      Max,
                      log(c[1])
                      + log(c[2])
-                     + β * ξ * log(k[1]^ϕ * (m[1,1]^μ * m[2,1]^(1-μ))^(1-ϕ) - c[1] - x[1,2] - sum(m[1,i] for i in 1:numSectors)) #
-                     + β * (1-ξ) * log(k[2]^ϕ * (m[1,2]^μ * m[2,2]^(1-μ))^(1-ϕ) - c[2] - x[2,2] - sum(m[2,i] for i in 1:numSectors)) #
-                     + β * ξ * log(k[1]^ϕ * (m[1,1]^μ * m[2,1]^(1-μ))^(1-ϕ) - c[1] - x[1,1] - sum(m[1,i] for i in 1:numSectors))
-                     + β * (1-ξ) * log(k[2]^ϕ * (m[1,2]^μ * m[2,2]^(1-μ))^(1-ϕ)- c[2] - x[2,1] -  sum(m[2,i] for i in 1:numSectors))
+                     + β * log(b * k[1]^ϕ * (m[1,1]^μ * m[2,1]^(1 - μ))^(1 - ϕ) - c[1] - x[1,2] - sum(m[1,i] for i in 1:numSectors) + (1 - δ) * k[1]) #
+                     + β * ν * log(b * k[2]^ϕ * (m[1,2]^μ * m[2,2]^(1 - μ))^(1 - ϕ) - c[2] - x[2,2] - sum(m[2,i] for i in 1:numSectors) + (1 - δ) * k[2]) #
+                     + β * ξ * log(b * k[1]^ϕ * (m[1,1]^μ * m[2,1]^(1 - μ))^(1 - ϕ) - c[1] - x[1,1] - sum(m[1,i] for i in 1:numSectors) + (1 - δ) * k[1])
+                     + β * ν * log(b * k[2]^ϕ * (m[1,2]^μ * m[2,2]^(1 - μ))^(1 - ϕ) - c[2] - x[2,1] - sum(m[2,i] for i in 1:numSectors) + (1 - δ) * k[2])
                     )
         optimize!(modTrial)
-        wTarg[n] = JuMP.objective_value(modTrial)
+        push!(wTarg, JuMP.objective_value(modTrial))
         if compute_policy
-            σ[n] = value.(c)
-            f[n] = value.(y)
+#            σ[n] = value.(c)
+#            f[n] = value.(y)
+            push!(xTarg, value.(x))
+            push!(sTarg, value.(c))
+            push!(mTarg, value.(m))
+            push!(yTarg, value.(y))
         end
 #        global intK[n] = value.(f)
     end
     #global prevK = intK
     if compute_policy
-        return wTarg, σ, f
+#        return wTarg, sTarg, mTarg
     end
     return wTarg
 end
 
-wTarg, sigmaTarg, fTarg = Targ(wInit, grid, β; compute_policy=true)
+wTarg =  Targ(wInit, grid, β; compute_policy=true)
 
 #=
 function solveOptGrowth(initial_w; tol = 1e-6, max_iter = 500)
