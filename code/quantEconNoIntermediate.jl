@@ -27,7 +27,7 @@ numPoints1D = 4
 grid = Vector{Vector{Float64}}(undef,(numPoints1D)^numSectors)
 
 gridMax = 5
-gridMin = 0.0001
+gridMin = 1
 gridHood = 0
 
 iter=1
