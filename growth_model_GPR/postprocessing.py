@@ -47,8 +47,8 @@ def ls_error(n_agents, t1, t2, num_points):
         y_pred_old, sigma_old = gp_old.predict(k_sample, return_std=True)
         y_pred_new, sigma_new = gp_new.predict(k_sample, return_std=True)
 
-        print("Sigma_old",sigma_old)
-        print("Sigma_new", sigma_new)
+        #print("Sigma_old",sigma_old)
+        #print("Sigma_new", sigma_new)
 
         # plot predictive mean and 95% quantiles
         #for j in range(num_points):

@@ -196,8 +196,13 @@ def initial(k_init, n_agents):
 
     #print("What is X",X)
     #x, z_l, z_u, constraint_multipliers, obj, status=nlp.solve(X)
+    nlp.addOption("obj_scaling_factor", -1.00) #max function 
     nlp.addOption('mu_strategy', 'adaptive')
     nlp.addOption('tol', 1e-6)
+    nlp.addOption("print_level", 0)
+    nlp.addOption("hessian_approximation", "limited-memory")
+
+
     A, B = nlp.solve(X) 
     #print("A", A, "B", B)
 

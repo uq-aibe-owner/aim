@@ -205,9 +205,12 @@ def iterate(k_init, n_agents, gp_old):
     # First create a handle for the Ipopt problem 
     nlp=cyipopt.Problem(n=N, m = M, problem_obj=HS07, lb=X_L, ub=X_U, cl=G_L, cu=G_U,) 
 
-
+    nlp.addOption("obj_scaling_factor", -1.00) # max function 
     nlp.addOption('mu_strategy', 'adaptive')
     nlp.addOption('tol', 1e-6)
+    nlp.addOption("print_level", 0)
+    nlp.addOption("hessian_approximation", "limited-memory")
+
     A, B = nlp.solve(X) 
     #print("A", A, "B", B) 
     x = B['x'] 
