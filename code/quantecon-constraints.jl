@@ -10,9 +10,24 @@ import Pkg; Pkg.add("Random")
 import Pkg; Pkg.add("IterTools")
 import Pkg; Pkg.add("JuMP")
 import Pkg; Pkg.add("Ipopt")
-import Pkg; Pkg.add("BenchmarkTools")=#
+import Pkg; Pkg.add("BenchmarkTools")
+import Pkg; Pkg.add("GaussianProcesses")
+=#
 
-using MathOptInterface, BenchmarkTools, LinearAlgebra, Statistics, QuantEcon, Interpolations, NLsolve, Optim, Random, IterTools, JuMP, Ipopt;
+using
+    MathOptInterface,
+    BenchmarkTools,
+    LinearAlgebra,
+    Statistics,
+    QuantEcon,
+    Interpolations,
+    NLsolve,
+    Optim,
+    Random,
+    IterTools,
+    JuMP,
+    Ipopt,
+    GaussianProcesses;
 
 
 δ = 0.1
@@ -63,7 +78,7 @@ function Targ(w, grid, β ; compute_policy = false)
         @variable(modTrial, u)
         @variable(modTrial, w)
         for i in 1:numSectors
-            @constraint(modTrial, c[i] <= y[i])
+#            @constraint(modTrial, c[i] <= y[i])
             @NLconstraint(modTrial, y[i] == b * k[i]^ϕ * mComb[i]^(1-ϕ))
             @constraint(modTrial, kp[i] == xComb[i] + (1-δ) * k[i])
             @constraint(modTrial, 0 == y[i] - c[i] - sum(m[i,:]) - sum(x[i,:]))
@@ -122,7 +137,19 @@ InvPf = Vector{Float64}[]
        for j = 1:numPoints1D^numSectors
            push!(InvPf, XTarg[j]./fTarg[j])
        end
-
+# a function for turning vectors of vectors into matrices
+function vvm(x)
+           dim1 = length(x)
+           dim2 = length(x[1])
+           matrix = zeros(Float64, dim1, dim2)
+           @inbounds @fastmath for i in 1:dim1, for j in 1:dim2
+                   matrix[i, j] = x[i][j]
+               end
+           end
+           return matrix
+end
+#alternatively
+gridM = transpose(reduce(hcat, grid))
 #=
 function solveOptGrowth(initial_w; tol = 1e-6, max_iter = 500)
     fixedpoint(w -> T(wVal, grid, β, f), initial_w).zero # gets returned
