@@ -19,7 +19,7 @@ No_samples = 10*n_agents
 
 # control of iterations
 numstart = 1   # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
-numits = 7    # which is the iteration to end
+numits = 10    # which is the iteration to end
 
 filename = "restart/restart_file_step_"  #folder with the restart/result files
 

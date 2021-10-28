@@ -49,10 +49,12 @@ print("===============================================================")
 # compute errors   
 avg_err=post.ls_error(n_agents, numstart, numits, No_samples_postprocess)
 
+print("Average error is: ", avg_err)
+
 #======================================================================
 print("===============================================================")
 print(" ")
-#print " Errors are computed -- see error.txt"
+print(" Errors are computed -- see error.txt")
 print(" ")
 print("===============================================================")
 #======================================================================
