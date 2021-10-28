@@ -149,20 +149,6 @@ MPX = Vector{Float64}[]
            push!(MPX, XTarg[j]./yTarg[j])
        end
 # a function for turning vectors of vectors into matrices
-<<<<<<< HEAD
-function vvm(x)
-           dim1 = length(x)
-           dim2 = length(x[1])
-           matrix = zeros(Float64, dim1, dim2)
-           @inbounds @fastmath 
-           for i in 1:dim1 
-                for j in 1:dim2
-                    matrix[i, j] = x[i][j]
-                end
-           end
-        return matrix
-end
-=======
 #function vvm(x)
 #           dim1 = length(x)
 #           dim2 = length(x[1])
@@ -173,7 +159,6 @@ end
 #           end
 #           return matrix
 #end
->>>>>>> 1af0a0c (parameter tweaks and registration of wInit)
 #alternatively
 gridM = reduce(hcat, grid)
 #=
