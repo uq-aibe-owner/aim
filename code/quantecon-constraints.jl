@@ -143,7 +143,7 @@ function vvm(x)
            dim2 = length(x[1])
            matrix = zeros(Float64, dim1, dim2)
            @inbounds @fastmath 
-           for i in 1:dim1, 
+           for i in 1:dim1 
                 for j in 1:dim2
                     matrix[i, j] = x[i][j]
                 end
