@@ -8,37 +8,43 @@
 #======================================================================
 
 from parameters import *
-from ipopt_wrapper import EV_F, EV_GRAD_F, EV_G, EV_JAC_G
+from ipopt_wrapperA import EV_F, EV_GRAD_F, EV_G, EV_JAC_G
 import numpy as np
 #import pyipopt
 import cyipopt
 #======================================================================
-#Create ev_f, eval_f, eval_grad_f, eval_g, eval_jac_g for given k_init and n_agent
-def eval_f(X):
-    return EV_F(X, k_init, n_agents)
 
-def eval_grad_f(X):
-    return EV_GRAD_F(X,k_init, n_agents)
-
-def eval_g(X):
-    return EV_G(X, k_init, n_agents)
-    
-def eval_jac_g(X, flag):
-    return EV_JAC_G(X, flag, k_init, n_agents)
 
 class HS071():
 
     def __init__(self, X, n_agents, k_init, NELE_JAC, NELE_HESS):
-        self.X = X
+        self.x = X
         self.n_agents = n_agents
         self.k_init = k_init
         self.NELE_JAC = NELE_JAC
         self.NELE_HESS = NELE_HESS
+        #self.flag
+
+
+    #Create ev_f, eval_f, eval_grad_f, eval_g, eval_jac_g for given k_init and n_agent
+    def eval_f(self,x):
+        return EV_F(x, self.k_init, self.n_agents)
+
+    def eval_grad_f(self,x):
+        return EV_GRAD_F(x, self.k_init, self.n_agents)
+
+    def eval_g(self,x):
+        return EV_G(x, self.k_init, self.n_agents)
+        
+    def eval_jac_g(self,x, flag):
+        return EV_JAC_G(x, flag, self.k_init, self.n_agents)
     
     def objective(self, x):
         """Returns the scalar value of the objective given x."""
 #       return x[0] * x[3] * np.sum(x[0:3]) + x[2]"""
-        return eval_f(x)
+        #print("afdsadas",x)
+        return self.eval_f(x)
+
     def gradient(self, x):
         """Returns the gradient of the objective with respect to x."""
         """return np.array([
@@ -47,16 +53,19 @@ class HS071():
             x[0]*x[3] + 1.0,
             x[0]*np.sum(x[0:3])
         ])"""
-        return eval_grad_f(x)
+        return self.eval_grad_f(x)
     def constraints(self, x):
         """Returns the constraints."""
 #       return np.array((np.prod(x), np.dot(x, x)))
-        return eval_g(x)
+        return self.eval_g(x)
+
     def jacobian(self, x):
         """Returns the Jacobian of the constraints with respect to x."""
 #       return np.concatenate((np.prod(x)/x, 2*x))
-        return eval_jac_g(x, flag)
-    def hessianstructure(self):
+        return self.eval_jac_g(x, False)
+
+        
+    #def hessianstructure(self):
         """Returns the row and column indices for non-zero vales of the
         Hessian."""
         
@@ -64,9 +73,9 @@ class HS071():
         # therefore this function is redundant. It is included as an example
         # for structure callback.
 
-        return np.nonzero(np.tril(np.ones((4, 4))))
+    #    return np.nonzero(np.tril(np.ones((4, 4)))) # unsure
 
-    def hessian(self, x, lagrange, obj_factor):
+    #def hessian(self, x, lagrange, obj_factor):
         """Returns the non-zero values of the Hessian."""
         
         """
@@ -86,12 +95,15 @@ class HS071():
         H += lagrange[1]*2*np.eye(4)
 
         row, col = self.hessianstructure()
+
         
         """
         
 
         #return H[row, col]
-        return NELE_HESS # unsure
+    #    print("tried to call H")
+    #    return None
+        #return self.NELE_HESS # unsure, very unsure
 
     def intermediate(self, alg_mod, iter_count, obj_value, inf_pr, inf_du, mu,
                      d_norm, regularization_size, alpha_du, alpha_pr,
@@ -169,7 +181,7 @@ def initial(k_init, n_agents):
     HS07 = HS071(X, n_agents, k_init, NELE_JAC, NELE_HESS) # creates an instance of the class
         
     # First create a handle for the Ipopt problem 
-    nlp=cyipopt.problem(n=nvars, m = M, problem_obj=HS07, lb=X_L, ub=X_U, cl=G_L, cb=G_U,)
+    nlp=cyipopt.Problem(n=nvars, m = M, problem_obj=HS07, lb=X_L, ub=X_U, cl=G_L, cu=G_U,)
     #To be edited:
     """
     nlp.num_option("obj_scaling_factor", -1.00)
@@ -178,8 +190,26 @@ def initial(k_init, n_agents):
     nlp.str_option("derivative_test", "first-order")
     nlp.str_option("hessian_approximation", "limited-memory")
     nlp.int_option("print_level", 0)
+
+
     """
-    x, z_l, z_u, constraint_multipliers, obj, status=nlp.solve(X)
+
+    #print("What is X",X)
+    #x, z_l, z_u, constraint_multipliers, obj, status=nlp.solve(X)
+    nlp.addOption("obj_scaling_factor", -1.00) #max function 
+    nlp.addOption('mu_strategy', 'adaptive')
+    nlp.addOption('tol', 1e-6)
+    nlp.addOption("print_level", 0)
+    nlp.addOption("hessian_approximation", "limited-memory")
+
+
+    A, B = nlp.solve(X) 
+    #print("A", A, "B", B)
+
+    x = B['x'] 
+    #print(x)
+    g = B['g']
+    obj = B['obj_val']
     nlp.close()
     # x: Solution of the primal variables
     # z_l, z_u: Solution of the bound multipliers
@@ -201,6 +231,12 @@ def initial(k_init, n_agents):
     #    f.write(str(num)+"\t")
     #f.write("\n")
     #f.close()
+
+    print("Initial iteration")
+
+    print("Consumption", c)
+    print("Labour",l)
+    print("Investment",inv)
     
     return obj, c, l, inv
     

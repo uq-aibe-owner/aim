@@ -23,6 +23,13 @@ import postprocessing as post                 #computes the L2 and Linfinity err
 import numpy as np
 
 
+#import cPickle as pickle
+import pickle
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, WhiteKernel, Matern
+
+
+import matplotlib.pyplot as plt 
 #======================================================================
 # Start with Value Function Iteration
 
@@ -49,10 +56,56 @@ print("===============================================================")
 # compute errors   
 avg_err=post.ls_error(n_agents, numstart, numits, No_samples_postprocess)
 
+print("Average error is: ", avg_err)
+
 #======================================================================
 print("===============================================================")
 print(" ")
-#print " Errors are computed -- see error.txt"
+print(" Errors are computed -- see error.txt")
 print(" ")
 print("===============================================================")
 #======================================================================
+
+
+print("interpreting data")
+# Load the model from the previous iteration step
+restart_data = filename + str(numits-1) + ".pcl"
+with open(restart_data, 'rb') as fd_old:
+    gp_old = pickle.load(fd_old)
+    print("data from iteration step ", numits -1 , "loaded from disk")
+fd_old.close()
+
+#ans = []
+x_ = [] 
+c_ = [] 
+l_ = [] 
+inv_ = [] 
+
+np.random.seed(100)   #fix seed
+dim = n_agents
+Xtraining = np.random.uniform(k_bar, k_up, (No_samples*2, dim))
+y = np.zeros(No_samples*2, float) # training targets    
+print("solve")
+# solve bellman equations at training points
+for iI in range(len(Xtraining)):
+    print(iI)
+    #y[iI] = solviter.iterate(Xtraining[iI], n_agents,gp_old)[0] 
+    obj, c, l, inv = solviter.iterate(Xtraining[iI], n_agents,gp_old)
+    x_.append(Xtraining[iI])
+    c_.append(c)
+    l_.append(l)
+    inv_.append(inv)
+
+print('x',x_)
+print('c',c_)
+print('l',l_)
+print('inv',inv_) 
+
+plt.plot(x_,c_)
+
+
+
+
+#plt.plot(Xtraining,y)
+#plt.show()
+print("done")
