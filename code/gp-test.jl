@@ -9,7 +9,7 @@ using
 
 func(x) = (x[1]-2)^2*x[1]+x[2];
 
-numSamps = 10
+numSamps = 5
 numPlot = 20
 sampGrid = Vector{Float64}[]
 plotGrid = Vector{Float64}[]
