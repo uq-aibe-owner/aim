@@ -27,7 +27,8 @@ using
     IterTools,
     JuMP,
     Ipopt,
-    GaussianProcesses;
+    GaussianProcesses,
+    Random;
 
 
 δ = 0.1
@@ -62,8 +63,9 @@ sTarg = Vector{Float64}[]
 mTarg = Matrix{Float64}[]
 xTarg = Matrix{Float64}[]
 wTarg = Float64[]
-
-for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
+rng = MersenneTwister(1234)
+randvec = 20 .+ 30*rand(rng,numPoints1D)
+for p in product(randvec, randvec)
     push!(grid, collect(p))
 end
 #wval = w.(grid)
@@ -76,7 +78,8 @@ function Targ(w, grid, β ; compute_policy = false)
 
     for n in 1:length(grid)
         k = grid[n]
-        modTrial = Model(Ipopt.Optimizer);
+        modTrial = Model(Ipopt.Optimizer)
+        set_silent(modTrial)
         @variable(modTrial,  c[1:numSectors] >= 0.0001)
         @variable(modTrial, y[1:numSectors] >= 0.0001)
         @variable(modTrial, kp[1:numSectors]>= 0.0001)
@@ -164,11 +167,14 @@ MPX = Vector{Float64}[]
 gridM = reduce(hcat, grid)
 
 mz = MeanZero()
+ml = MeanLin([2., 3.])
+mp = MeanPoly([2. 3.; 1. 2.])
 kern = SE(0.0, 0.0)
-gp = GP(mgrid, wTarg, mz, kern)
+gp = GP(gridM, wTarg, ml, kern)
+#gp = GP(gridM, wTarg, MeanLin([2., 3.]), kern)
 GaussianProcesses.optimize!(gp)
-predict_f(gp, mgrid)[1]
-predict_f(gp,hcat([x, y]))[1]
-gp = GP(mgrid, wTarg, MeanPoly([2. 3.; 3., 1.]), kern)
-#plot(contour(gp), heatmap(gp); fmt=:png)
+predict_f(gp, gridM)[1]
+fstar(x) = predict_f(gp,hcat(x))[1]
+
+plot!(contour(gp), heatmap(gp); fmt=:png)
 #wTargp(x, y) = predict_f(gp,hcat([x, y]))[1]
