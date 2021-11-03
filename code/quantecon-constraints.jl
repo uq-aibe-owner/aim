@@ -41,7 +41,7 @@ b = 1/(ϕ^ϕ * (1-ϕ)^(1-ϕ))
 
 
 numSectors = 2
-numPoints1D = 5
+numPoints1D = 25
 gridMax = 50
 gridMin = 10
 
@@ -64,8 +64,11 @@ mTarg = Matrix{Float64}[]
 xTarg = Matrix{Float64}[]
 wTarg = Float64[]
 rng = MersenneTwister(1234)
-randvec = 20 .+ 30*rand(rng,numPoints1D)
-for p in product(randvec, randvec)
+#randvec = 20 .+ 30*rand(rng,numPoints1D)
+#for p in product(randvec, randvec)
+#    push!(grid, collect(p))
+#end
+for p in product(LinRange(gridMin,gridMax,numPoints1D),LinRange(gridMin,gridMax,numPoints1D))
     push!(grid, collect(p))
 end
 #wval = w.(grid)
@@ -170,7 +173,7 @@ mz = MeanZero()
 ml = MeanLin([2., 3.])
 mp = MeanPoly([2. 3.; 1. 2.])
 kern = SE(0.0, 0.0)
-gp = GP(gridM, wTarg, ml, kern)
+gp = GP(gridM, wTarg, mz, kern)
 #gp = GP(gridM, wTarg, MeanLin([2., 3.]), kern)
 GaussianProcesses.optimize!(gp)
 predict_f(gp, gridM)[1]
