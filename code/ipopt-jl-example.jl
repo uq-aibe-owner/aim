@@ -169,11 +169,11 @@ status = solveProblem(prob)
 println(Ipopt.ApplicationReturnStatus[status])
 println(prob.x)
 println(prob.obj_val)
-if @isdefined(obj)
-else
-    obj = Float64[]
-end
-if length(obj) == 1
-else
-    println(obj[length(obj)-1])
-end
+#if @isdefined(obj)
+#else
+    #obj = Float64[]
+#end
+#if length(obj) == 1
+#else
+    #println(obj[length(obj)-1])
+#end

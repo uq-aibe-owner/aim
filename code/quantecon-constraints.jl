@@ -41,7 +41,7 @@ b = 1/(ϕ^ϕ * (1-ϕ)^(1-ϕ))
 
 
 numSectors = 2
-numPoints1D = 25
+numPoints1D = 15
 gridMax = 50
 gridMin = 10
 

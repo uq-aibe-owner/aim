@@ -146,11 +146,12 @@ def EV_G(X, k_init, n_agents):
         G[i + n_agents]=lab[i]
         G[i+2*n_agents]=inv[i]
     
-    
+    # market clearing constraints: sischei has a sum over sectors, ours is per market
     f_prod=output_f(k_init, lab)
     Gamma_adjust=0.5*zeta*k_init*((inv/k_init - delta)**2.0)
-    sectors_sum=cons + inv - delta*k_init - (f_prod - Gamma_adjust)
-    G[3*n_agents]=np.sum(sectors_sum)
+    sectors_sum=cons + inv + Gamma_adjust - f_prod
+#    G[3*n_agents]=np.sum(sectors_sum) #sischei's orig
+    G[3*n_agents]=np.linalg.norm(sectors_sum)
     
     return G
     
@@ -174,11 +175,17 @@ def EV_G_ITER(X, k_init, n_agents):
         G[i + n_agents]=lab[i]
         G[i+2*n_agents]=inv[i]
     
-    
+
     f_prod=output_f(k_init, lab)
     Gamma_adjust=0.5*zeta*k_init*((inv/k_init - delta)**2.0)
-    sectors_sum=cons + inv - delta*k_init - (f_prod - Gamma_adjust)
-    G[3*n_agents]=np.sum(sectors_sum)
+    sectors_sum=cons + inv + Gamma_adjust - f_prod
+#    G[3*n_agents]=np.sum(sectors_sum) #sischei's orig
+    G[3*n_agents]=np.linalg.norm(sectors_sum)
+
+#    f_prod=output_f(k_init, lab)
+#    Gamma_adjust=0.5*zeta*k_init*((inv/k_init - delta)**2.0)
+#    sectors_sum=cons + inv - delta*k_init - (f_prod - Gamma_adjust)
+#    G[3*n_agents]=np.sum(sectors_sum)
     
     return G
 
