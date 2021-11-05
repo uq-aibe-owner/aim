@@ -28,6 +28,7 @@ using
     JuMP,
     Ipopt,
     GaussianProcesses,
+    Plots
     Random;
 
 
@@ -46,7 +47,7 @@ gridMax = 50
 gridMin = 10
 
 u(x,y) = (log(x) + log(y))
-wInit(x,y) = (log(x) + log(y))/(1 - β)
+wInit(x) = (log(x[1]) + log(x[2]))/(1 - β)
 function gradwInit(g, x, y)
     g[1] = 1/x/(1-β)
     g[2] = 1/y/(1-β)

@@ -1,4 +1,21 @@
-using Ipopt, ForwardDiff, ReverseDiff
+using Ipopt, ForwardDiff
+#=
+using ReverseDiff:
+    GradientTape,
+    GradientConfig,
+    gradient,
+    gradient!,
+    JacobianTape,
+    JacobianConfig,
+    jacobian,
+    jacobian!,
+    hessian,
+    hessian!,
+    HessianTape,
+    HessianConfig,
+    compile,
+    DiffResults
+=#
 # hs071
 # min x1 * x4 * (x1 + x2 + x3) + x3
 # st  x1 * x2 * x3 * x4 >= 25
@@ -10,8 +27,11 @@ function F(x)
     x[1] * x[4] * (x[1] + x[2] + x[3]) + x[3]
 end
 
+ xzero = [1., 2., 3., 4.]
+ FgradTape = GradientTape(F, xzero)
+ compFgradTape = compile(FgradTape)
 function gradF(x)
-   ReverseDiff.gradient(F, x)
+    return gradient!(similar(xzero), compFgradTape, x)
 end
 
 function G(x)
@@ -19,25 +39,28 @@ function G(x)
      x[1]^2 + x[2]^2 + x[3]^2 + x[4]^2]
 end
 
+ GgradTape = [GradientTape(x -> G(x)[1], xzero), GradientTape(x -> G(x)[2], xzero)]
+ compGgradTape = [compile(GgradTape[1]), compile(GgradTape[2])]
 function jacG(x)
-    ReverseDiff.jacobian(G, x)
+    results = similar(xzero, m, n)
+    results[1,:] = gradient!(similar(xzero), compGgradTape[1], x)
+    results[2,:] = gradient!(similar(xzero), compGgradTape[2], x)
+    return results
 end
 
+FhessTape = HessianTape(F, xzero)
+compFhessTape = compile(FhessTape)
 function hessF(x)
-    ForwardDiff.hessian(F, x)
+    return hessian!(similar(xzero, n, n), compFhessTape, x)
 end
+
+GhessTape = [HessianTape(x -> G(x)[1], xzero), HessianTape(x -> G(x)[2], xzero)]
+compGhessTape = [compile(GhessTape[1]), compile(GhessTape[2])]
 function vHessG(x)
-    out = ForwardDiff.jacobian(x -> jacG(x), x)
-    val = zeros(n*m, n)
-    iter = 1
-    for i in 1:m
-         for j in 1:n
-             val[iter, :] = out[i + (j-1)*m, :]
-             iter += 1
-         end
-    end
-    return val
+    return [hessian!(similar(xzero, n, n), compGhessTape[1], x),
+            hessian!(similar(xzero, n, n), compGhessTape[2], x)]
 end
+#we now define the callback function for ipopt
 function eval_f(x)
     F(x)
 end
@@ -126,7 +149,7 @@ function eval_h(x, mode, rows, cols, obj_factor, lambda, values)
     iter1 = 1
     for i in 1:n
         for j in 1:i
-            values[iter1] += lambda[1] * vHessG(x)[i, j] + lambda[2] * vHessG(x)[i + n, j]
+            values[iter1] += lambda[1] * vHessG(x)[1][i, j] + lambda[2] * vHessG(x)[2][i, j]
             iter1 += 1
         end
     end
@@ -160,20 +183,20 @@ m = 2
 g_L = [25.0, 40.0]
 g_U = [2.0e19, 40.0]
 
+function probcall()
 prob = createProblem(n, x_L, x_U, m, g_L, g_U, 8, 10,
-                     eval_f, eval_g, eval_grad_f, eval_jac_g, eval_h)
-
-prob.x = [1.0, 5.0, 5.0, 1.0]
-status = solveProblem(prob)
-
+                     eval_f, eval_g, eval_grad_f, eval_jac_g, eval_h);
+prob.x = [1.0, 5.0, 5.0, 1.0];
+status = solveProblem(prob);
 println(Ipopt.ApplicationReturnStatus[status])
 println(prob.x)
 println(prob.obj_val)
+end
 #if @isdefined(obj)
 #else
-    #obj = Float64[]
+#    obj = Float64[]
 #end
 #if length(obj) == 1
 #else
-    #println(obj[length(obj)-1])
+#   println(obj[length(obj)-1])
 #end

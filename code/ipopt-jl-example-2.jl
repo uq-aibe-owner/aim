@@ -103,6 +103,7 @@ m = 2
 g_L = [25.0, 40.0]
 g_U = [2.0e19, 40.0]
 
+function probcall()
 prob = createProblem(n, x_L, x_U, m, g_L, g_U, 8, 10,
                      eval_f, eval_g, eval_grad_f, eval_jac_g, eval_h)
 
@@ -112,3 +113,4 @@ status = solveProblem(prob)
 println(Ipopt.ApplicationReturnStatus[status])
 println(prob.x)
 println(prob.obj_val)
+end
