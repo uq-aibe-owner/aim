@@ -1,4 +1,6 @@
-u + β * wusing Ipopt, ForwardDiff
+#u + β * w
+
+using Ipopt, ForwardDiff
 
 using ReverseDiff:
     GradientTape,
@@ -23,7 +25,9 @@ using ReverseDiff:
 #     1 <= x1, x2, x3, x4 <= 5
 # Start at (1,5,5,1)
 # End at (1.000..., 4.743..., 3.821..., 1.379...)
-const D = 2
+
+
+#=const D = 2
 const czero = ones(D)
 const szero = ones(D,D)
 # the variables
@@ -39,6 +43,7 @@ s = similar(szero)
 m = similar(szero)
 x = Float64[]
 push(x, u)
+=#
 
 function F(x)
     u + β * w
