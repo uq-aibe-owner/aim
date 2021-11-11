@@ -20,6 +20,7 @@ import nonlinear_solver_iterate as solviter  # solves opt. problems during VFI
 from parameters import *  # parameters of model
 import interpolation as interpol  # interface to sparse grid library/terminal VF
 import interpolation_iter as interpol_iter  # interface to sparse grid library/iteration
+import interpolation_combined as interpol_comb
 import postprocessing as post  # computes the L2 and Linfinity error of the model
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,6 +43,8 @@ start = time.time()
 
 for i in range(numstart, numits):
     # terminal value function
+
+    """
     if i == 1:
         print("start with Value Function Iteration")
         interpol.GPR_init(i)
@@ -52,6 +55,8 @@ for i in range(numstart, numits):
     else:
         print("Now, we are in Value Function Iteration step", i)
         interpol_iter.GPR_iter(i)
+    """ 
+    interpol_comb.GPR_iter(i)
 
 #for j in range(len(ctnr)):
 #    sample_container["capital"].append(ctnr[j]['kap'])
@@ -130,7 +135,7 @@ def get_values(kap):
     return values
 
 def generate_random_k_vals(): 
-    return np.random.uniform(kap_L, kap_U, (No_samples, n_agt)) 
+    return np.random.uniform(kap_L+0.2, kap_U-0.2, (No_samples, n_agt)) 
 
 def solve_for_kvals(kap, n_agt, gp_old): 
 
@@ -149,6 +154,9 @@ def convergence_check():
     # iterate and then testing on the optimized value #v_old - val_tst
 
     # load the final instance of Gaussian Process
+
+    np.random.seed(0)
+
     gp_old = get_gaussian_process() 
 
     random_k = generate_random_k_vals() 
@@ -180,6 +188,8 @@ def convergence_check():
     print(val_old - val_new)
 
     print("maximum difference between value function iterates is",np.max(np.abs(val_old-val_new)))
+
+    print("generated from k vals",random_k)
 
     return val_old - val_new
 
@@ -230,6 +240,9 @@ def help():
 
 
 help()
+
+avg_err = post.ls_error(n_agt, numstart, numits, No_samples_postprocess)
+
 
 #plot_scatterplot()
 

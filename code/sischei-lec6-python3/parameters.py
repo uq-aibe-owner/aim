@@ -16,7 +16,7 @@ import numpy as np
 
 # How many training points for GPR
 n_agt = 2  # number of continuous dimensions of the model
-No_samples = 20 * n_agt
+No_samples = 15 * n_agt
 # number of policy variables, eg: con, lab, inv.
 n_pol = 3
 # number of market clearing constraints: (in S&B17 this is 1)
@@ -33,7 +33,7 @@ n_ctt = n_pol * n_agt + n_mcl  # number of constraints
 numstart = 1  # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
 numits = 15  # which is the iteration to end
 
-length_scale_bounds=(1.05,3)
+length_scale_bounds=(10e-5,10e5)
 
 
 alphaSK = 10e-3
@@ -56,7 +56,7 @@ big_A = (1.0 - beta) / (psi * beta)
 
 # Ranges For States
 kap_L = 0.2
-kap_U = 3.0
+kap_U = 3
 range_cube = kap_U - kap_L  # range of [0..1]^d in 1D
 
 
