@@ -60,7 +60,7 @@ def GPR_init(iteration, save_data=True):
 #        print(Xtraining[iI], y[iI])
         
     # Instantiate a Gaussian Process model
-    kernel = RBF() 
+    kernel = RBF(length_scale_bounds=length_scale_bounds) 
       
     #kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
     #kernel = 1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0),nu=1.5)
@@ -68,7 +68,7 @@ def GPR_init(iteration, save_data=True):
     #kernel = 1.0 * RBF(length_scale=100.0, length_scale_bounds=(1e-1, 2e2)) \
     #+ WhiteKernel(noise_level=1, noise_level_bounds=(1e-3, 1e+0))   
     
-    gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
+    gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9, alpha=alphaSK)
 
     # Fit to data using Maximum Likelihood Estimation of the parameters
     gp.fit(Xtraining, y)    
