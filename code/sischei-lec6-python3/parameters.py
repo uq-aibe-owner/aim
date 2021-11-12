@@ -14,9 +14,11 @@ import numpy as np
 
 # ======================================================================
 
+verbose = False
+
 # How many training points for GPR
 n_agt = 2  # number of continuous dimensions of the model
-No_samples = 15 * n_agt
+No_samples = 10 * n_agt
 # number of policy variables, eg: con, lab, inv.
 n_pol = 3
 # number of market clearing constraints: (in S&B17 this is 1)
@@ -31,7 +33,7 @@ n_ctt = n_pol * n_agt + n_mcl  # number of constraints
 
 # control of iterations
 numstart = 1  # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
-numits = 15  # which is the iteration to end
+numits = 10  # which is the iteration to end
 
 length_scale_bounds=(10e-5,10e5)
 

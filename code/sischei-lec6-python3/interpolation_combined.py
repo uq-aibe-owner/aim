@@ -16,9 +16,11 @@
 
 import numpy as np
 from parameters import *
-import nonlinear_solver_initial as solver1
+#import nonlinear_solver_initial as solver1
 
-import nonlinear_solver_iterate as solver2
+#import nonlinear_solver_iterate as solver2 
+
+import nonlinear_solver_combined as solver
 from econ import *
 
 # import cPickle as pickle
@@ -55,9 +57,9 @@ def GPR_iter(iteration, save_data=True):
     for iI in range(len(Xtraining)):
 
         if iteration == 1: 
-            res = solver1.initial(Xtraining[iI], n_agt)
+            res = solver.iterate(Xtraining[iI], n_agt,initial=True,verbose=verbose)
         else: 
-            res = solver2.iterate(Xtraining[iI], n_agt, gp_old)
+            res = solver.iterate(Xtraining[iI], n_agt, gp_old,initial=False,verbose=verbose)
 
         res['kap'] = Xtraining[iI]
         res['itr'] = iteration
