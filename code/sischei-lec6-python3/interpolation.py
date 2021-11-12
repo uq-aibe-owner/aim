@@ -77,7 +77,8 @@ def GPR_iter(iteration, save_data=True):
             + str(res['lab'])
             + str(res['inv'])
         )
-        print("{}".format(msg))
+        if economic_verbose:
+            print("{}".format(msg))
         if iteration == numits - 1:
             ctnr.append(res)
 
