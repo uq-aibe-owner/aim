@@ -15,12 +15,14 @@
 #     edited by Patrick O'Callaghan, with Cameron Gordon and Josh Aberdeen, 11/2021
 # ======================================================================
 
-import nonlinear_solver_initial as solver  # solves opt. problems for terminal VF
-import nonlinear_solver_iterate as solviter  # solves opt. problems during VFI
+#import nonlinear_solver_initial as solver  # solves opt. problems for terminal VF
+#import nonlinear_solver_iterate as solviter  # solves opt. problems during VFI
+
+import nonlinear_solver as solver
 from parameters import *  # parameters of model
-import interpolation as interpol  # interface to sparse grid library/terminal VF
-import interpolation_iter as interpol_iter  # interface to sparse grid library/iteration
-import interpolation_combined as interpol_comb
+#import interpolation as interpol  # interface to sparse grid library/terminal VF
+#import interpolation_iter as interpol_iter  # interface to sparse grid library/iteration
+import interpolation as interpol_comb
 import postprocessing as post  # computes the L2 and Linfinity error of the model
 import numpy as np
 import matplotlib.pyplot as plt
@@ -141,7 +143,7 @@ def solve_for_kvals(kap, n_agt, gp_old):
 
     result = np.empty((kap.shape[0]))
     for i in range(kap.shape[0]): 
-        result[i] = solviter.iterate(k_init=kap[i], n_agt=n_agt, gp_old=gp_old)['obj']
+        result[i] = solver.iterate(k_init=kap[i], n_agt=n_agt, gp_old=gp_old,initial=False, verbose=verbose)['obj']
 
     return result
 

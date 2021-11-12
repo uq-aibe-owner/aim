@@ -2,28 +2,33 @@
 #
 #     This routine interfaces with IPOPT
 #     It sets the optimization problem for every training point
-#     at the beginning of the VFI.
+#     during the VFI.
 #
 #     Simon Scheidegger, 11/16 ; 07/17; 01/19
 #     edited by Patrick O'Callaghan, with Cameron Gordon and Josh Aberdeen, 11/2021
+
 #     Main difference is the shift from pyipopt to cyipopt
 #     Involves a class to pass the optimisation problem to ipopt
 # ======================================================================
 
-from parameters import *
+from parameters import * 
 from ipopt_wrapper_A import EV_F, EV_GRAD_F, EV_G, EV_JAC_G
+from ipopt_wrapper_A import EV_F_ITER, EV_GRAD_F_ITER, EV_G_ITER, EV_JAC_G_ITER
 import numpy as np
 
 # import pyipopt
-import cyipopt
-from HS071_initial import *
+import cyipopt 
 
-# ======================================================================
+from HS071 import HS071 
 
 
-def initial(k_init, n_agt):
-    # IPOPT PARAMETERS below
 
+
+def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=False):
+
+
+
+    # IPOPT PARAMETERS below "
     N = n_pol * n_agt  # number of vars
     M = n_ctt  # number of constraints
     NELE_JAC = N * M
@@ -83,31 +88,54 @@ def initial(k_init, n_agt):
 
     X[(i_con-1)*n_agt:i_con*n_agt] = con_init
     X[(i_lab-1)*n_agt:i_lab*n_agt] = lab_init
-    X[(i_inv-1)*n_agt:i_inv*n_agt] = inv_init
-    # X=np.ones(N)
-
     """
-    Superseded by cyipopt object 
+    Superseded by cyipopt 
     # Create ev_f, eval_f, eval_grad_f, eval_g, eval_jac_g for given k_init and n_agent 
+        
     def eval_f(X):
-        return EV_F(X, k_init, n_agt)
-    
+        return EV_F_ITER(X, k_init, n_agt, gp_old)
+        
     def eval_grad_f(X):
-        return EV_GRAD_F(X,k_init, n_agt)
-    
+        return EV_GRAD_F_ITER(X, k_init, n_agt, gp_old)
+        
     def eval_g(X):
-        return EV_G(X, k_init, n_agt)
+        return EV_G_ITER(X, k_init, n_agt)
         
     def eval_jac_g(X, flag):
-        return EV_JAC_G(X, flag, k_init, n_agt)
+        return EV_JAC_G_ITER(X, flag, k_init, n_agt)
+    """ 
+
+    HS07 = HS071(X, n_agents=n_agt, k_init=k_init, NELE_JAC=NELE_JAC, NELE_HESS=NELE_HESS, gp_old=gp_old, initial=initial, verbose=verbose) 
+
     """
 
-    # create problem object
-    HS07 = HS071(X, n_agt, k_init, NELE_JAC, NELE_HESS)
+    if initial: 
+        from HS071_initial import HS071 as HS071_initial_run 
+        HS07 = HS071_initial_run(
+            X, n_agt, k_init, NELE_JAC, NELE_HESS
+        )  # creates an instance of the class
 
-    # First create a handle for the Ipopt problem
-    # nlp=pyipopt.create(N, X_L, X_U, M, G_L, G_U, NELE_JAC, NELE_HESS, eval_f, eval_grad_f, eval_g, eval_jac_g)
+    else: 
+        from HS071_iter import HS071 as HS071_iterate
 
+        HS07 = HS071_iterate(
+            X, n_agt, k_init, NELE_JAC, NELE_HESS, gp_old
+        )  # creates an instance of the class
+    """ 
+
+    """
+    # First create a handle for the Ipopt problem 
+    nlp=pyipopt.create(N, X_L, X_U, M, G_L, G_U, NELE_JAC, NELE_HESS, eval_f, eval_grad_f, eval_g, eval_jac_g)
+    nlp.num_option("obj_scaling_factor", -1.0)
+    nlp.num_option("tol", 1e-6)
+    nlp.num_option("acceptable_tol", 1e-5)
+    nlp.str_option("derivative_test", "first-order")
+    nlp.str_option("hessian_approximation", "limited-memory")
+    nlp.int_option("print_level", 1)
+    
+    x, z_l, z_u, constraint_multipliers, obj, status=nlp.solve(X)
+
+    """
     nlp = cyipopt.Problem(
         n=N,
         m=M,
@@ -117,20 +145,27 @@ def initial(k_init, n_agt):
         cl=G_L,
         cu=G_U,
     )
+
     nlp.add_option("obj_scaling_factor", -1.00)  # max function
     nlp.add_option("mu_strategy", "adaptive")
     nlp.add_option("tol", 1e-4)
     nlp.add_option("print_level", 0)
     nlp.add_option("hessian_approximation", "limited-memory")
 
-    # x, z_l, z_u, constraint_multipliers, obj, status=nlp.solve(X)
     optimal_soln, info = nlp.solve(X)
 
     x = info["x"]  # soln of the primal variables
-    ctt = info["g"]  # constraint values
+    ctt = info["g"]  # constraint multipliers
     obj = info["obj_val"]  # objective value
 
-    nlp.close()
+    if final != True:
+        nlp.close()
+
+    # x: Solution of the primal variables
+    # z_l, z_u: Solution of the bound multipliers
+    # constraint_multipliers: Solution of the constraint multipliers
+    # obj: Objective value
+    # status: Exit Status
 
     # Unpack Consumption, Labor, and Investment
     con = x[(i_con-1)*n_agt:i_con*n_agt]

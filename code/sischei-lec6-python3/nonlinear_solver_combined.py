@@ -19,7 +19,7 @@ import numpy as np
 # import pyipopt
 import cyipopt 
 
-from HS071_combined import HS071 
+from HS071 import HS071 
 
 
 
