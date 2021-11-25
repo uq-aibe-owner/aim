@@ -41,7 +41,7 @@ b = 1/(ϕ^ϕ * (1-ϕ)^(1-ϕ))
 
 
 numSectors = 2
-numPoints1D = 20
+numPoints1D = 500
 gridMax = 50
 gridMin = 10
 
@@ -64,7 +64,7 @@ mTarg = Matrix{Float64}[]
 xTarg = Matrix{Float64}[]
 wTarg = Float64[]
 rng = MersenneTwister(1234)
-for p in product(LinRange(0,50,numPoints1D), LinRange(0,50,numPoints1D))
+for p in product(LinRange(gridMin,gridMax,numPoints1D), LinRange(gridMin, gridMax,numPoints1D))
     push!(grid, collect(p))
 end
 #wval = w.(grid)
@@ -123,8 +123,11 @@ function Targ(w, grid, β ; compute_policy = false)
     return
 end
 
-wTargC  = Targ(wInit, grid, β; compute_policy=true)
-
+function evalBell()
+ wTargC  = Targ(wInit, grid, β; compute_policy=true)
+    return wTargC
+end
+#=
 XTarg = Vector{Float64}[]
        for j = 1:numPoints1D^numSectors
            push!(XTarg, sum(xTarg[j][:,i] for i in 1:numSectors))
@@ -177,3 +180,4 @@ fstar(x) = predict_f(gp,hcat(x))[1]
 
 plot!(contour(gp), heatmap(gp); fmt=:png)
 #wTargp(x, y) = predict_f(gp,hcat([x, y]))[1]
+=#
