@@ -15,11 +15,14 @@
 #     edited by Patrick O'Callaghan, with Cameron Gordon and Josh Aberdeen, 11/2021
 # ======================================================================
 
-import nonlinear_solver_initial as solver  # solves opt. problems for terminal VF
-import nonlinear_solver_iterate as solviter  # solves opt. problems during VFI
+#import nonlinear_solver_initial as solver  # solves opt. problems for terminal VF
+#import nonlinear_solver_iterate as solviter  # solves opt. problems during VFI
+
+import nonlinear_solver as solver
 from parameters import *  # parameters of model
-import interpolation as interpol  # interface to sparse grid library/terminal VF
-import interpolation_iter as interpol_iter  # interface to sparse grid library/iteration
+#import interpolation as interpol  # interface to sparse grid library/terminal VF
+#import interpolation_iter as interpol_iter  # interface to sparse grid library/iteration
+import interpolation as interpol_comb
 import postprocessing as post  # computes the L2 and Linfinity error of the model
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,6 +45,8 @@ start = time.time()
 
 for i in range(numstart, numits):
     # terminal value function
+
+    """
     if i == 1:
         print("start with Value Function Iteration")
         interpol.GPR_init(i)
@@ -52,6 +57,8 @@ for i in range(numstart, numits):
     else:
         print("Now, we are in Value Function Iteration step", i)
         interpol_iter.GPR_iter(i)
+    """ 
+    interpol_comb.GPR_iter(i)
 
 #for j in range(len(ctnr)):
 #    sample_container["capital"].append(ctnr[j]['kap'])
@@ -76,14 +83,14 @@ print("===============================================================")
 # ======================================================================
 
 # compute errors
-avg_err = post.ls_error(n_agt, numstart, numits, No_samples_postprocess)
+#avg_err = post.ls_error(n_agt, numstart, numits, No_samples_postprocess)
 
 # ======================================================================
-print("===============================================================")
-print(" ")
+#print("===============================================================")
+#print(" ")
 # print " Errors are computed -- see error.txt"
-print(" ")
-print("===============================================================")
+#print(" ")
+#print("===============================================================")
 # ======================================================================
 end = time.time()
 
@@ -129,34 +136,64 @@ def get_values(kap):
     values = Gaussian_Process.predict(kap, return_std=False)
     return values
 
+def generate_random_k_vals(): 
+    return np.random.uniform(kap_L+0.2, kap_U-0.2, (No_samples, n_agt)) 
+
+def solve_for_kvals(kap, n_agt, gp_old): 
+
+    result = np.empty((kap.shape[0]))
+    for i in range(kap.shape[0]): 
+        result[i] = solver.iterate(k_init=kap[i], n_agt=n_agt, gp_old=gp_old,initial=False, verbose=verbose)['obj']
+
+    return result
+
+
+
+
 
 def convergence_check():
     # tests for convergence by checking the predicted values at the sampled points of the final
     # iterate and then testing on the optimized value #v_old - val_tst
 
-    kap_tst = []
-    val_tst = []
-
     # load the final instance of Gaussian Process
 
-    with open("./restart/restart_file_step_" + str(numits - 1) + ".pcl", "rb") as fd:
-        gp_old = pickle.load(fd)
+    np.random.seed(0)
 
-    fd.close()
-    for i in ctnr:
-        kap_tst.append(i['kap'])
-        val_tst.append(i['obj'])
+    gp_old = get_gaussian_process() 
 
-    kap_tst = np.array(kap_tst)
-    val_tst = np.array(val_tst)
+    random_k = generate_random_k_vals() 
 
-    val_old = gp_old.predict(kap_tst, return_std=False)
+    val_old = get_values(random_k) 
+
+    val_new = solve_for_kvals(random_k, n_agt, gp_old)
+
+
+
+
+
+
+
+    #for i in ctnr:
+    #    kap_tst.append(i['kap'])
+    #    val_tst.append(i['obj'])
+
+    #kap_tst = np.array(kap_tst)
+    #val_tst = np.array(val_tst)
+
 
     print("=================== Convergence Check ===================")
     print(" ")
     print("Should be close to zero for all values")
 
-    print(val_old - val_tst)
+    np.set_printoptions(precision=2)
+
+    print(val_old - val_new)
+
+    print("maximum difference between value function iterates is",np.max(np.abs(val_old-val_new)))
+
+    print("generated from k vals",random_k)
+
+    return val_old - val_new
 
 
 #def extract_variables(default=True, k_vals=None):
@@ -186,7 +223,7 @@ def convergence_check():
 #    return kap_tst, val_tst, consumption, investment, labor
 
 
-convergence_check()
+conv = convergence_check()
 #kap_tst, val_tst, consumption, investment, labor = extract_variables()
 # print(consumption)
 # print(investment)
@@ -206,7 +243,10 @@ def help():
 
 help()
 
-# plot_scatterplot()
+avg_err = post.ls_error(n_agt, numstart, numits, No_samples_postprocess)
+
+
+#plot_scatterplot()
 
 
 """
