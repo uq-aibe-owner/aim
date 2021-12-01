@@ -1,3 +1,5 @@
+#Add all this to ipopt_wrapper
+
 """
 This class is used to pass the optimization problem to cyipopt.
 """

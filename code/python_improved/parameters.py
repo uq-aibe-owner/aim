@@ -1,6 +1,6 @@
 # ======================================================================
 #
-#     sets the parameters for the model
+#     sets the parameters and economic functions for the model
 #     "Growth Model"
 #
 #     The model is described in Scheidegger & Bilionis (2017)
@@ -13,6 +13,8 @@
 import numpy as np
 
 # ======================================================================
+
+# Move all to NL solver.py
 
 verbose = False 
 economic_verbose = False
@@ -45,7 +47,7 @@ alphaSK = 10e-3
 filename = "restart/restart_file_step_"  # folder with the restart/result files
 
 # ======================================================================
-
+# Move this all to to econ.py
 # Model Paramters
 
 beta = 0.5
@@ -77,3 +79,48 @@ inv_U = 10.0
 
 # Number of test points to compute the error in the postprocessing
 No_samples_postprocess = 20
+
+#====================================================================== 
+#utility function u(c,l) 
+
+def utility(con=[], lab=[]):
+    sum_util=0.0
+    n=len(con)
+    for i in range(n):
+        nom1=(con[i]/big_A)**(1.0-gamma) -1.0
+        den1=1.0-gamma
+        
+        nom2=(1.0-psi)*((lab[i]**(1.0+eta)) -1.0)
+        den2=1.0+eta
+        
+        sum_util+=(nom1/den1 - nom2/den2)
+    
+    util=sum_util
+    
+    return util 
+
+
+#====================================================================== 
+# output_f 
+
+def output_f(kap=[], lab=[]):
+    fun_val = big_A*(kap**psi)*(lab**(1.0 - psi))
+    return fun_val
+
+#======================================================================
+# adjustment cost
+#
+def Gamma_adjust(kap=[], inv=[]):
+    fun_val = 0.5*zeta*kap*((inv/kap - delta)**2.0)
+    return fun_val
+
+#======================================================================
+# transformation to comp domain -- range of [k_bar, k_up]
+
+def box_to_cube(knext=[]):
+    # transformation onto cube [0,1]^d      
+    knext_box = np.clip(knext, kap_L, kap_U)
+
+    return knext_box
+
+#======================================================================

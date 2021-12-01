@@ -16,12 +16,7 @@
 
 import numpy as np
 from parameters import *
-#import nonlinear_solver_initial as solver1
-
-#import nonlinear_solver_iterate as solver2 
-
 import nonlinear_solver as solver
-from econ import *
 
 # import cPickle as pickle
 import pickle
@@ -47,15 +42,15 @@ def GPR_iter(iteration, save_data=True):
         fd_old.close()
 
     ##generate sample aPoints
-    np.random.seed(666)  # fix seed
+    np.random.seed(666)  # fix seed #move to main so it doesnt re-initialise
     dim = n_agt
     Xtraining = np.random.uniform(kap_L, kap_U, (No_samples, dim))
     y = np.zeros(No_samples, float)  # training targets
 
     ctnr = []
     # solve bellman equations at training points
+    # Xtraining is our initial level of capital for this iteration
     for iI in range(len(Xtraining)):
-
         if iteration == 1: 
             res = solver.iterate(Xtraining[iI], n_agt,initial=True,verbose=verbose)
         else: 
