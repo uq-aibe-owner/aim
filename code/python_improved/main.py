@@ -38,29 +38,9 @@ start = time.time()
 
 
 for i in range(numstart, numits):
+
     # terminal value function
-
-    """
-    if i == 1:
-        print("start with Value Function Iteration")
-        interpol.GPR_init(i)
-
-    elif i == numits - 1:
-        print("Now, we are in Value Function Iteration step", i)
-        ctnr = interpol_iter.GPR_iter(i)
-    else:
-        print("Now, we are in Value Function Iteration step", i)
-        interpol_iter.GPR_iter(i)
-    """ 
     interpol_comb.GPR_iter(i)
-
-#for j in range(len(ctnr)):
-#    sample_container["capital"].append(ctnr[j]['kap'])
-#    sample_container["value"].append(ctnr[j]['obj'])
-#    sample_container["iteration"].append(ctnr[j]['itr'])
-#    sample_container["consumption"].append(ctnr[j]['con'])
-#    sample_container["investment"].append(ctnr[j]['inv'])
-#    sample_container["labor"].append(ctnr[j]['lab'])
 
 # ======================================================================
 print("===============================================================")

@@ -22,17 +22,21 @@ economic_verbose = False
 # How many training points for GPR
 n_agt = 2  # number of continuous dimensions of the model
 No_samples = 10 * n_agt
-# number of policy variables, eg: con, lab, inv.
-n_pol = 3
+
 # number of market clearing constraints: (in S&B17 this is 1)
 n_mcl = n_agt
-# arbitrary indices for the policy variables
-i_con = 1
-i_lab = 2
-i_inv = 3
+# arbitrary indices for the policy variables 
+
+dct_pol = {
+    "con": 1,
+    "lab": 2,
+    "inv": 3,
+}
+# number of policy variables, eg: con, lab, inv.
+n_pol = len(dct_pol)
 # the i for the market clearing constraints
-i_mcl = n_pol + 1
-n_ctt = n_pol * n_agt + n_mcl  # number of constraints
+i_mcl = 1 #n_pol + 1
+n_ctt = n_mcl #n_pol * n_agt + n_mcl  # number of constraints
 
 # control of iterations
 numstart = 1  # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
@@ -75,6 +79,8 @@ lab_U = 10.0
 inv_L = 1e-2
 inv_U = 10.0
 
+mcl_L = mcl_U = 0.0
+
 # ======================================================================
 
 # Number of test points to compute the error in the postprocessing
@@ -108,19 +114,24 @@ def output_f(kap=[], lab=[]):
     return fun_val
 
 #======================================================================
+# Constraints
+
+
+
+#======================================================================
 # adjustment cost
 #
-def Gamma_adjust(kap=[], inv=[]):
-    fun_val = 0.5*zeta*kap*((inv/kap - delta)**2.0)
-    return fun_val
+#def Gamma_adjust(kap=[], inv=[]):
+#    fun_val = 0.5*zeta*kap*((inv/kap - delta)**2.0)
+#    return fun_val
 
 #======================================================================
 # transformation to comp domain -- range of [k_bar, k_up]
 
-def box_to_cube(knext=[]):
-    # transformation onto cube [0,1]^d      
-    knext_box = np.clip(knext, kap_L, kap_U)
-
-    return knext_box
+#def box_to_cube(knext=[]):
+#    # transformation onto cube [0,1]^d      
+#    knext_box = np.clip(knext, kap_L, kap_U)
+#
+#    return knext_box
 
 #======================================================================

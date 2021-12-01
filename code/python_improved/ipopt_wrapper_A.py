@@ -27,7 +27,7 @@ def EV_F(X, kap, n_agt):
        
     return VT_sum
 
-# V infinity
+# initial guess of the value function
 def V_INFINITY(kap=[]):
     e=np.ones(len(kap))
     c=output_f(kap,e)
@@ -130,7 +130,6 @@ def EV_GRAD_F_ITER(X, kap, n_agt, gp_old):
 #   Equality constraints for the first time step of the model
             
 def EV_G(X, kap, n_agt):
-    N=len(X)
     M=n_ctt
     G=np.empty(M, float)
     
@@ -141,55 +140,18 @@ def EV_G(X, kap, n_agt):
 
     # variables for the market clearing constraints
     f_prod=output_f(kap, lab)
-    gam_ad=Gamma_adjust(kap,inv)
-    # sector sum (as defined in paper)
-    if n_mcl == 1:
-        #scs=con+inv-f_prod
-        scs=con+inv-delta*kap-(f_prod-gam_ad)
-    else:
     # canonical market clearing constraint
-        mcl = con + inv - f_prod
+    mcl = con + inv - f_prod
 
     # constraints
-    G[(i_con-1)*n_agt:i_con*n_agt] = con
-    G[(i_lab-1)*n_agt:i_lab*n_agt] = lab
-    G[(i_inv-1)*n_agt:i_inv*n_agt] = inv
-    if n_mcl == 1:
-        G[(i_mcl-1)*n_agt:i_mcl*n_agt] = sum(scs**2)
-    else:
-        G[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl
+    G[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl
 
     return G
 
 #======================================================================
 #   Equality constraints during the VFI of the model
 def EV_G_ITER(X, kap, n_agt):
-#    N=len(X)
-#    M=n_ctt
-#    G=np.empty(M, float)
-#
-#    # Extract Variables
-#    con=X[(i_con-1)*n_agt:i_con*n_agt]
-#    lab=X[(i_lab-1)*n_agt:i_lab*n_agt]
-#    inv=X[(i_inv-1)*n_agt:i_inv*n_agt]
-#
-#    # variables for the market clearing constraints
-#    f_prod=output_f(kap, lab)
-#    gam_ad=Gamma_adjust(kap,inv)
-#    # sector sum (as defined in paper)
-#    # scs=con+inv-delta*kap-(f_prod-gam_ad))
-#    # canonical market clearing constraint
-#    mcl = con + inv - f_prod
-#    #
-#    # constraints
-#    G[(i_con-1)*n_agt:i_con*n_agt] = con
-#    G[(i_lab-1)*n_agt:i_lab*n_agt] = lab
-#    G[(i_inv-1)*n_agt:i_inv*n_agt] = inv
-#
-#    if n_ctt == 1:
-#        G[(i_scs-1)*n_agt:i_scs*n_agt] = scs
-#    else:
-#        G[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl
+    
     return EV_G(X, kap, n_agt)
 
 #======================================================================
@@ -264,7 +226,7 @@ def EV_JAC_G_ITER(X, flag, kap, n_agt):
     
 #======================================================================
 
-class HS071(): 
+class ipopt_obj(): 
     """
     Class for the optimization problem to be passed to cyipopt 
     Further optimisations may be possible here by including a hessian (optional param) 
@@ -331,21 +293,3 @@ class HS071():
         if self.verbose: 
             msg = "Objective value at iteration #{:d} is - {:g}"
             print(msg.format(iter_count, obj_value))
-    
-    
-    
-    
-    
-    
-    
-    
-    
-            
-            
-            
-    
-    
-    
-    
-    
-    

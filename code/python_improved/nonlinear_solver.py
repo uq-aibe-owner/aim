@@ -12,8 +12,8 @@
 # ======================================================================
 
 from parameters import * 
-from ipopt_wrapper_A import EV_F, EV_GRAD_F, EV_G, EV_JAC_G, HS071
-from ipopt_wrapper_A import EV_F_ITER, EV_GRAD_F_ITER, EV_G_ITER, EV_JAC_G_ITER
+from ipopt_wrapper_A import ipopt_obj
+
 import numpy as np
 
 # import pyipopt
@@ -55,17 +55,17 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     X_U[(i_inv-1)*n_agt:i_inv*n_agt] = inv_U
 
     # Set bounds for the constraints
-    G_L[(i_con-1)*n_agt:i_con*n_agt] = con_L
-    G_U[(i_con-1)*n_agt:i_con*n_agt] = con_U
+    #G_L[(i_con-1)*n_agt:i_con*n_agt] = con_L
+    #G_U[(i_con-1)*n_agt:i_con*n_agt] = con_U
 
-    G_L[(i_lab-1)*n_agt:i_lab*n_agt] = lab_L
-    G_U[(i_lab-1)*n_agt:i_lab*n_agt] = lab_U
+    #G_L[(i_lab-1)*n_agt:i_lab*n_agt] = lab_L
+    #G_U[(i_lab-1)*n_agt:i_lab*n_agt] = lab_U
 
-    G_L[(i_inv-1)*n_agt:i_inv*n_agt] = inv_L
-    G_U[(i_inv-1)*n_agt:i_inv*n_agt] = inv_U
+    #G_L[(i_inv-1)*n_agt:i_inv*n_agt] = inv_L
+    #G_U[(i_inv-1)*n_agt:i_inv*n_agt] = inv_U
 
     #for the market clearing constraints
-    mcl_L = mcl_U = 0.0
+    
     if n_mcl == 1:
         G_L[(i_mcl-1)*n_agt] = mcl_L
         G_U[(i_mcl-1)*n_agt] = mcl_U
@@ -82,54 +82,10 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     X[(i_con-1)*n_agt:i_con*n_agt] = con_init
     X[(i_lab-1)*n_agt:i_lab*n_agt] = lab_init
     X[(i_inv-1)*n_agt:i_inv*n_agt] = inv_init
-    """
-    Superseded by cyipopt 
-    # Create ev_f, eval_f, eval_grad_f, eval_g, eval_jac_g for given k_init and n_agent 
-        
-    def eval_f(X):
-        return EV_F_ITER(X, k_init, n_agt, gp_old)
-        
-    def eval_grad_f(X):
-        return EV_GRAD_F_ITER(X, k_init, n_agt, gp_old)
-        
-    def eval_g(X):
-        return EV_G_ITER(X, k_init, n_agt)
-        
-    def eval_jac_g(X, flag):
-        return EV_JAC_G_ITER(X, flag, k_init, n_agt)
-    """ 
 
-    HS07 = HS071(X, n_agents=n_agt, k_init=k_init, NELE_JAC=NELE_JAC, NELE_HESS=NELE_HESS, gp_old=gp_old, initial=initial, verbose=verbose) 
+    HS07 = ipopt_obj(X, n_agents=n_agt, k_init=k_init, NELE_JAC=NELE_JAC, NELE_HESS=NELE_HESS, gp_old=gp_old, initial=initial, verbose=verbose) 
 
-    """
 
-    if initial: 
-        from HS071_initial import HS071 as HS071_initial_run 
-        HS07 = HS071_initial_run(
-            X, n_agt, k_init, NELE_JAC, NELE_HESS
-        )  # creates an instance of the class
-
-    else: 
-        from HS071_iter import HS071 as HS071_iterate
-
-        HS07 = HS071_iterate(
-            X, n_agt, k_init, NELE_JAC, NELE_HESS, gp_old
-        )  # creates an instance of the class
-    """ 
-
-    """
-    # First create a handle for the Ipopt problem 
-    nlp=pyipopt.create(N, X_L, X_U, M, G_L, G_U, NELE_JAC, NELE_HESS, eval_f, eval_grad_f, eval_g, eval_jac_g)
-    nlp.num_option("obj_scaling_factor", -1.0)
-    nlp.num_option("tol", 1e-6)
-    nlp.num_option("acceptable_tol", 1e-5)
-    nlp.str_option("derivative_test", "first-order")
-    nlp.str_option("hessian_approximation", "limited-memory")
-    nlp.int_option("print_level", 1)
-    
-    x, z_l, z_u, constraint_multipliers, obj, status=nlp.solve(X)
-
-    """
     nlp = cyipopt.Problem(
         n=N,
         m=M,
