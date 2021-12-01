@@ -12,21 +12,14 @@
 # ======================================================================
 
 from parameters import * 
-from ipopt_wrapper_A import EV_F, EV_GRAD_F, EV_G, EV_JAC_G
+from ipopt_wrapper_A import EV_F, EV_GRAD_F, EV_G, EV_JAC_G, HS071
 from ipopt_wrapper_A import EV_F_ITER, EV_GRAD_F_ITER, EV_G_ITER, EV_JAC_G_ITER
 import numpy as np
 
 # import pyipopt
 import cyipopt 
 
-from HS071 import HS071 
-
-
-
-
 def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=False):
-
-
 
     # IPOPT PARAMETERS below "
     N = n_pol * n_agt  # number of vars
@@ -51,7 +44,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     Z_U = np.empty(N)
 
     # get coords of an individual grid points
-    grid_pt_box = k_init
+    #grid_pt_box = k_init
     X_L[(i_con-1)*n_agt:i_con*n_agt] = con_L
     X_U[(i_con-1)*n_agt:i_con*n_agt] = con_U
 
@@ -88,6 +81,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     X[(i_con-1)*n_agt:i_con*n_agt] = con_init
     X[(i_lab-1)*n_agt:i_lab*n_agt] = lab_init
+    X[(i_inv-1)*n_agt:i_inv*n_agt] = inv_init
     """
     Superseded by cyipopt 
     # Create ev_f, eval_f, eval_grad_f, eval_g, eval_jac_g for given k_init and n_agent 

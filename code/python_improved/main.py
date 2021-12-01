@@ -15,23 +15,17 @@
 #     edited by Patrick O'Callaghan, with Cameron Gordon and Josh Aberdeen, 11/2021
 # ======================================================================
 
-#import nonlinear_solver_initial as solver  # solves opt. problems for terminal VF
-#import nonlinear_solver_iterate as solviter  # solves opt. problems during VFI
-
 import nonlinear_solver as solver
 from parameters import *  # parameters of model
-#import interpolation as interpol  # interface to sparse grid library/terminal VF
-#import interpolation_iter as interpol_iter  # interface to sparse grid library/iteration
 import interpolation as interpol_comb
 import postprocessing as post  # computes the L2 and Linfinity error of the model
+
 import numpy as np
 import matplotlib.pyplot as plt
-
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 import pickle
 import time
-from econ import *
 
 # ======================================================================
 # Start with Value Function Iteration
@@ -94,7 +88,6 @@ print("===============================================================")
 # ======================================================================
 end = time.time()
 
-
 #def plot_scatterplot():
 #
 #    # for all sampled points (not all will have converged, but will give an approximate view of the surface)
@@ -122,14 +115,12 @@ end = time.time()
 #    # plt.show()
 #    plt.show()
 
-
 def get_gaussian_process():
     with open("./restart/restart_file_step_" + str(numits - 1) + ".pcl", "rb") as fd:
         gp_old = pickle.load(fd)
 
     fd.close()
     return gp_old
-
 
 def get_values(kap):
     Gaussian_Process = get_gaussian_process()
@@ -147,10 +138,6 @@ def solve_for_kvals(kap, n_agt, gp_old):
 
     return result
 
-
-
-
-
 def convergence_check():
     # tests for convergence by checking the predicted values at the sampled points of the final
     # iterate and then testing on the optimized value #v_old - val_tst
@@ -166,12 +153,6 @@ def convergence_check():
     val_old = get_values(random_k) 
 
     val_new = solve_for_kvals(random_k, n_agt, gp_old)
-
-
-
-
-
-
 
     #for i in ctnr:
     #    kap_tst.append(i['kap'])
