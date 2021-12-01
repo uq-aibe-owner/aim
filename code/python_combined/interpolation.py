@@ -54,13 +54,13 @@ def GPR_iter(iteration, save_data=True):
 
     ctnr = []
     # solve bellman equations at training points
-    for iI in range(len(Xtraining)):
+    """ for iI in range(len(Xtraining)):"""
 
         if iteration == 1: 
             res = solver.iterate(Xtraining[iI], n_agt,initial=True,verbose=verbose)
         else: 
             res = solver.iterate(Xtraining[iI], n_agt, gp_old,initial=False,verbose=verbose)
-
+            
         res['kap'] = Xtraining[iI]
         res['itr'] = iteration
         y[iI] = res['obj']
