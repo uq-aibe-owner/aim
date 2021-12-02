@@ -128,7 +128,7 @@ def EV_GRAD_F_ITER(X, kap, n_agt, gp_old):
 #   Equality constraints for the first time step of the model
       
 def EV_G(X, kap, n_agt):
-    M=n_ctt
+    M=n_ctt*n_agt
     G=np.empty(M, float)
     
     # Extract Variables
