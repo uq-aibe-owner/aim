@@ -43,16 +43,14 @@ def EV_F_ITER(X, kap, n_agt, gp_old):
     con=X[(i_con-1)*n_agt:i_con*n_agt]
     lab=X[(i_lab-1)*n_agt:i_lab*n_agt]
     inv=X[(i_inv-1)*n_agt:i_inv*n_agt]
+    kap_nxt=X[(i_inv-1)*n_agt:i_inv*n_agt]
 
-    kap_nxt= (1-delta)*kap + inv
 
-    #transform to comp. domain of the model
-    kap_nxt_cube = kap_nxt #box_to_cube(kap_nxt)
     
     # initialize correct data format for training point
     s = (1,n_agt)
     Xtest = np.zeros(s)
-    Xtest[0,:] = kap_nxt_cube
+    Xtest[0,:] = kap_nxt
     
     # interpolate the function, and get the point-wise std.
     V_old, sigma_test = gp_old.predict(Xtest, return_std=True)
@@ -137,15 +135,15 @@ def EV_G(X, kap, n_agt):
     con=X[(i_con-1)*n_agt:i_con*n_agt]
     lab=X[(i_lab-1)*n_agt:i_lab*n_agt]
     inv=X[(i_inv-1)*n_agt:i_inv*n_agt]
-
-    # variables for the market clearing constraints
-    f_prod=output_f(kap, lab)
+    kap_nxt=X[(i_kap_nxt-1)*n_agt:i_kap_nxt*n_agt]
 
     # pull in constraints
-    dct_ctt = fcn_ctt(con, inv, f_prod)
+    dct_ctt = fcn_ctt(con, inv, lab, kap, kap_nxt)
     # apply constraints
-    G[(i_mcl-1)*n_agt:i_mcl*n_agt] = dct_ctt["mcl"]
-    
+    for iter in dct_ctt_ind_key:
+        print(len(dct_ctt[iter]))
+        G[(dct_ctt_ind[iter]-1)*n_agt:dct_ctt_ind[iter]*n_agt] = dct_ctt[iter]
+
 
     return G
 

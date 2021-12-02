@@ -23,7 +23,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     # IPOPT PARAMETERS below "
     N = n_pol * n_agt  # number of vars
-    M = n_ctt  # number of constraints
+    M = n_ctt * n_agt  # number of constraints
     NELE_JAC = N * M
     NELE_HESS = (N+1)*N/2  # number of non-zero entries of Hess matrix
 
@@ -66,12 +66,9 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     #for the market clearing constraints
     
-    if n_mcl == 1:
-        G_L[(i_mcl-1)*n_agt] = mcl_L
-        G_U[(i_mcl-1)*n_agt] = mcl_U
-    else:
-        G_L[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_L
-        G_U[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_U
+    
+    G_L[:] = mcl_L
+    G_U[:] = mcl_U
 
     # initial guesses for first iteration (aka a warm start)
     mu = 0.5

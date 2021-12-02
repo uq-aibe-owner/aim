@@ -25,14 +25,18 @@ No_samples = 10 * n_agt
 
 # number of market clearing constraints: (in S&B17 this is 1)
 n_mcl = n_agt
+n_fkp = n_agt
+
 # arbitrary indices for the policy variables 
 
 dct_pol = {
     "con": 1,
     "lab": 2,
     "inv": 3,
+    "kap_nxt":4
 }
-# number of policy variables, eg: con, lab, inv.
+
+# number of policy variables, eg: con, lab, inv. per agent
 n_pol = len(dct_pol)
 
 # creating variable names from policy variable dict
@@ -44,9 +48,24 @@ for iter in range(n_pol):
     # turn into a variable name with "i_" in front
     globals()["i_"+var] = dct_pol[var]
 
+# setup variables for constraints
+dct_ctt_ind = {
+    "mcl": 1,
+    #"knx": 2
+}
+
+# number of constraints per agent
+n_ctt = len(dct_ctt_ind)
+
+# creating variable names from constraint variable dict (similar to as with policy dict above)
+dct_ctt_ind_key = list(dct_ctt_ind.keys()) 
+for iter in range(n_ctt):
+    var = dct_ctt_ind_key[iter]
+    globals()["i_"+var] = dct_ctt_ind[var]
+
 # the i for the market clearing constraints
-i_mcl = 1 #n_pol + 1
-n_ctt = n_mcl #n_pol * n_agt + n_mcl  # number of constraints
+#i_mcl = 1
+#n_ctt = n_mcl + n_fkp #n_pol * n_agt + n_mcl  # number of constraints
 
 # control of iterations
 numstart = 1  # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
@@ -126,11 +145,12 @@ def output_f(kap=[], lab=[]):
 #======================================================================
 # Constraints
 
-def fcn_ctt(con, inv, f_prod):
+def fcn_ctt(con, inv, lab, kap, kap_nxt):
+    f_prod=output_f(kap, lab)
     dct_ctt = dict()
     # canonical market clearing constraint
     dct_ctt["mcl"] = con + inv - f_prod
-#    dct_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
+    #dct_ctt["knx"] = (1-delta)*kap + inv - kap_nxt
 #    dct_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
     return dct_ctt
 

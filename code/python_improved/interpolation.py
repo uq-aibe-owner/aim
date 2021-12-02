@@ -60,7 +60,7 @@ def GPR_iter(iteration, save_data=True):
         res['itr'] = iteration
         y[iI] = res['obj']
         ctt = res['ctt']
-        msg = "Excess demand is " + str(ctt[len(ctt) - n_mcl: len(ctt)]) + os.linesep
+        msg = "Excess demand is " + str(ctt[len(ctt) - n_agt: len(ctt)]) + os.linesep
         msg += "a quick check using output_f - consumption - investment" + os.linesep
         msg += (
             str(output_f(Xtraining[iI], res['lab']) - res['con'] - res['inv']) + os.linesep
