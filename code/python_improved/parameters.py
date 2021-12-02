@@ -34,6 +34,16 @@ dct_pol = {
 }
 # number of policy variables, eg: con, lab, inv.
 n_pol = len(dct_pol)
+
+# creating variable names from policy variable dict
+# creating list of the dict keys
+dct_pol_key = list(dct_pol.keys()) 
+for iter in range(n_pol):
+    # retrieve current iterations policy variable string
+    var = dct_pol_key[iter]
+    # turn into a variable name with "i_" in front
+    globals()["i_"+var] = dct_pol[var]
+
 # the i for the market clearing constraints
 i_mcl = 1 #n_pol + 1
 n_ctt = n_mcl #n_pol * n_agt + n_mcl  # number of constraints
@@ -116,7 +126,13 @@ def output_f(kap=[], lab=[]):
 #======================================================================
 # Constraints
 
-
+def fcn_ctt(con, inv, f_prod):
+    dct_ctt = dict()
+    # canonical market clearing constraint
+    dct_ctt["mcl"] = con + inv - f_prod
+#    dct_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
+#    dct_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
+    return dct_ctt
 
 #======================================================================
 # adjustment cost

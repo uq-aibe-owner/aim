@@ -99,7 +99,7 @@ function TargGrd(w, grid, β ; return_policy = false)
             #future capital
             @constraint(modTrial, kp[i] == xComb[i] + (1-δ) * k[i])
             #supply equals demand (eq'm constraint)
-            @constraint(modTrial, 0 == y[i] - c[i] - sum(m[i,:]) - sum(x[i,:]))
+            @constraint(modTrial, 0 == y[i] - c[i] - sum(m[i,:]) - sum(x[i,:])) #done
         end
         @NLconstraint(modTrial, xComb[1] == x[1,1]^ξ * x[2,1]^(1-ξ))
         @NLconstraint(modTrial, xComb[2] == x[1,2]^ξ * x[2,2]^(1-ξ))

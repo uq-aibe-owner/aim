@@ -128,7 +128,7 @@ def EV_GRAD_F_ITER(X, kap, n_agt, gp_old):
        
 #======================================================================
 #   Equality constraints for the first time step of the model
-            
+      
 def EV_G(X, kap, n_agt):
     M=n_ctt
     G=np.empty(M, float)
@@ -140,11 +140,12 @@ def EV_G(X, kap, n_agt):
 
     # variables for the market clearing constraints
     f_prod=output_f(kap, lab)
-    # canonical market clearing constraint
-    mcl = con + inv - f_prod
 
-    # constraints
-    G[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl
+    # pull in constraints
+    dct_ctt = fcn_ctt(con, inv, f_prod)
+    # apply constraints
+    G[(i_mcl-1)*n_agt:i_mcl*n_agt] = dct_ctt["mcl"]
+    
 
     return G
 
