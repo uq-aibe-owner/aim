@@ -16,14 +16,13 @@ import numpy as np
 def EV_F(X, kap, n_agt):
     
     # Extract Variables
-    con=X[(i_con-1)*n_agt:i_con*n_agt]
-    lab=X[(i_lab-1)*n_agt:i_lab*n_agt]
-    inv=X[(i_inv-1)*n_agt:i_inv*n_agt]
-
-    kap_nxt= (1-delta)*kap + inv
+    con=X[(i["con"]-1)*n_agt:i["con"]*n_agt]
+    lab=X[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
+    inv=X[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
+    knx=X[(i["knx"]-1)*n_agt:i["knx"]*n_agt]
     
     # Compute Value Function
-    VT_sum=utility(con, lab) + beta*V_INFINITY(kap_nxt)
+    VT_sum=utility(con, lab) + beta*V_INFINITY(knx)
        
     return VT_sum
 
@@ -40,18 +39,18 @@ def V_INFINITY(kap=[]):
 def EV_F_ITER(X, kap, n_agt, gp_old):
     
     # Extract Variables
-    con=X[(i_con-1)*n_agt:i_con*n_agt]
-    lab=X[(i_lab-1)*n_agt:i_lab*n_agt]
-    inv=X[(i_inv-1)*n_agt:i_inv*n_agt]
-    #kap_nxt=X[(i_inv-1)*n_agt:i_inv*n_agt]
+    con=X[(i["con"]-1)*n_agt:i["con"]*n_agt]
+    lab=X[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
+    inv=X[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
+    knx=X[(i["knx"]-1)*n_agt:i["knx"]*n_agt]
 
-    kap_nxt= (1-delta)*kap + inv
+    #knx= (1-delta)*kap + inv
 
     
     # initialize correct data format for training point
     s = (1,n_agt)
     Xtest = np.zeros(s)
-    Xtest[0,:] = kap_nxt
+    Xtest[0,:] = knx
     
     # interpolate the function, and get the point-wise std.
     V_old, sigma_test = gp_old.predict(Xtest, return_std=True)
@@ -133,24 +132,30 @@ def EV_G(X, kap, n_agt):
     G=np.empty(M, float)
     
     # Extract Variables
-    con=X[(i_con-1)*n_agt:i_con*n_agt]
-    lab=X[(i_lab-1)*n_agt:i_lab*n_agt]
-    inv=X[(i_inv-1)*n_agt:i_inv*n_agt]
-    #kap_nxt=X[(i_kap_nxt-1)*n_agt:i_kap_nxt*n_agt]
+    """ for iter in i_pol_key:
+        globals()[iter] = X[(i[iter]-1)*n_agt:i[iter]*n_agt] """
+
+    con=X[(i["con"]-1)*n_agt:i["con"]*n_agt]
+    lab=X[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
+    inv=X[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
+    knx=X[(i["knx"]-1)*n_agt:i["knx"]*n_agt]
+
+    #knx= (1-delta)*kap + inv
 
     f_prod=output_f(kap, lab)
 
     # pull in constraints
-    #dct_ctt = fcn_ctt(con, inv, lab, kap, kap_nxt)
+    e_ctt = f_ctt(con, inv, lab, kap, knx)
     # apply constraints
-    #for iter in dct_ctt_ind_key:
-        #G[(dct_ctt_ind[iter]-1)*n_agt:dct_ctt_ind[iter]*n_agt] = dct_ctt[iter]
+    for iter in i_ctt_key:
+        G[(i[iter]-1)*n_agt:i[iter]*n_agt] = e_ctt[iter]
 
-    G[(i_con-1)*n_agt:i_con*n_agt] = con
-    G[(i_lab-1)*n_agt:i_lab*n_agt] = lab
-    G[(i_inv-1)*n_agt:i_inv*n_agt] = inv
+    """ G[(i["con"]-1)*n_agt:i["con"]*n_agt] = con
+    G[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab
+    G[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv """
 
-    G[(i_mcl-1)*n_agt:i_mcl*n_agt]=con + inv - f_prod
+    """ G[(i_mcl-1)*n_agt:i_mcl*n_agt]=con + inv - f_prod
+    G[(i["knx"]-1)*n_agt:i["knx"]*n_agt]=(1-delta)*kap + inv - knx """
 
     return G
 
@@ -268,7 +273,7 @@ class ipopt_obj():
         else: 
             return EV_G_ITER(x, self.k_init, self.n_agents) 
 
-    def eval_jac_g(self, x, flag): 
+    def eval_jac_g(self, x, flag):
         if self.initial: 
             return EV_JAC_G(x, flag, self.k_init, self.n_agents) 
 

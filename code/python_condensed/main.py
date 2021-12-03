@@ -37,10 +37,10 @@ start = time.time()
 
 
 
-for i in range(numstart, numits):
+for iter in range(numstart, numits):
 
     # terminal value function
-    interpol_comb.GPR_iter(i)
+    interpol_comb.GPR_iter(iter)
 
 # ======================================================================
 print("===============================================================")
@@ -113,8 +113,8 @@ def generate_random_k_vals():
 def solve_for_kvals(kap, n_agt, gp_old): 
 
     result = np.empty((kap.shape[0]))
-    for i in range(kap.shape[0]): 
-        result[i] = solver.iterate(k_init=kap[i], n_agt=n_agt, gp_old=gp_old,initial=False, verbose=verbose)['obj']
+    for iter in range(kap.shape[0]): 
+        result[iter] = solver.iterate(k_init=kap[iter], n_agt=n_agt, gp_old=gp_old,initial=False, verbose=verbose)['obj']
 
     return result
 
@@ -134,7 +134,7 @@ def convergence_check():
 
     val_new = solve_for_kvals(random_k, n_agt, gp_old)
 
-    #for i in ctnr:
+    #for iter in ctnr:
     #    kap_tst.append(i['kap'])
     #    val_tst.append(i['obj'])
 
@@ -168,7 +168,7 @@ def convergence_check():
 #    labor = []
 #
 #    if default:
-#        for i in ctnr:
+#        for iter in ctnr:
 #            kap_tst.append(i[0])
 #            val_tst.append(i[1])
 #            consumption.append(i[3])

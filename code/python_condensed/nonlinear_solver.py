@@ -22,7 +22,7 @@ import cyipopt
 def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=False):
 
     # IPOPT PARAMETERS below "
-    N = n_pol*n_agt  # number of vars
+    N = n_pol  # number of vars
     M = n_ctt  # number of constraints
     NELE_JAC = N * M
     NELE_HESS = (N+1)*N/2  # number of non-zero entries of Hess matrix
@@ -45,44 +45,42 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     # get coords of an individual grid points
     grid_pt_box = k_init
-    X_L[(i_con-1)*n_agt:i_con*n_agt] = con_L
-    X_U[(i_con-1)*n_agt:i_con*n_agt] = con_U
+    X_L[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_L
+    X_U[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_U
 
-    X_L[(i_lab-1)*n_agt:i_lab*n_agt] = lab_L
-    X_U[(i_lab-1)*n_agt:i_lab*n_agt] = lab_U
+    X_L[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_L
+    X_U[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_U
 
-    X_L[(i_inv-1)*n_agt:i_inv*n_agt] = inv_L
-    X_U[(i_inv-1)*n_agt:i_inv*n_agt] = inv_U
+    X_L[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_L
+    X_U[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_U
 
     # Set bounds for the constraints
-    G_L[(i_con-1)*n_agt:i_con*n_agt] = con_L
-    G_U[(i_con-1)*n_agt:i_con*n_agt] = con_U
+    """ G_L[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_L
+    G_U[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_U
 
-    G_L[(i_lab-1)*n_agt:i_lab*n_agt] = lab_L
-    G_U[(i_lab-1)*n_agt:i_lab*n_agt] = lab_U
+    G_L[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_L
+    G_U[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_U
 
-    G_L[(i_inv-1)*n_agt:i_inv*n_agt] = inv_L
-    G_U[(i_inv-1)*n_agt:i_inv*n_agt] = inv_U
+    G_L[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_L
+    G_U[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_U """
 
     #for the market clearing constraints
-    
-    mcl_L = mcl_U = 0.0
-    
-    G_L[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_L
-    G_U[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_U
+    """ G_L[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_L
+    G_U[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_U """
+    G_L[:] = mcl_L
+    G_U[:] = mcl_U
 
     # initial guesses for first iteration (aka a warm start)
     mu = 0.5
-    con_init = mu*X_U[(i_con-1)*n_agt:i_con*n_agt]+(1-mu)*X_L[(i_con-1)*n_agt:i_con*n_agt]
-    lab_init = mu*X_U[(i_lab-1)*n_agt:i_lab*n_agt]+(1-mu)*X_L[(i_lab-1)*n_agt:i_lab*n_agt]
-    inv_init = mu*X_U[(i_inv-1)*n_agt:i_inv*n_agt]+(1-mu)*X_L[(i_inv-1)*n_agt:i_inv*n_agt]
+    con_init = mu*X_U[(i["con"]-1)*n_agt:i["con"]*n_agt]+(1-mu)*X_L[(i["con"]-1)*n_agt:i["con"]*n_agt]
+    lab_init = mu*X_U[(i["lab"]-1)*n_agt:i["lab"]*n_agt]+(1-mu)*X_L[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
+    inv_init = mu*X_U[(i["inv"]-1)*n_agt:i["inv"]*n_agt]+(1-mu)*X_L[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
 
-    X[(i_con-1)*n_agt:i_con*n_agt] = con_init
-    X[(i_lab-1)*n_agt:i_lab*n_agt] = lab_init
-    #X[(i_inv-1)*n_agt:i_inv*n_agt] = inv_init
+    X[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_init
+    X[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_init
+    #X[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_init
 
     HS07 = ipopt_obj(X, n_agents=n_agt, k_init=k_init, NELE_JAC=NELE_JAC, NELE_HESS=NELE_HESS, gp_old=gp_old, initial=initial, verbose=verbose) 
-
 
     nlp = cyipopt.Problem(
         n=N,
@@ -103,7 +101,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     optimal_soln, info = nlp.solve(X)
 
     x = info["x"]  # soln of the primal variables
-    ctt = info["g"]  # constraint multipliers
+    ctt = info["g"]  # constraints
     obj = info["obj_val"]  # objective value
 
     if final != True:
@@ -111,14 +109,18 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     # x: Solution of the primal variables
     # z_l, z_u: Solution of the bound multipliers
-    # constraint_multipliers: Solution of the constraint multipliers
+    # constraint_multipliers: Solution of the constraint
     # obj: Objective value
     # status: Exit Status
 
     # Unpack Consumption, Labor, and Investment
-    con = x[(i_con-1)*n_agt:i_con*n_agt]
-    lab = x[(i_lab-1)*n_agt:i_lab*n_agt]
-    inv = x[(i_inv-1)*n_agt:i_inv*n_agt]
+    """ for iter in i_pol_key:
+        globals()[iter] = x[(i[iter]-1)*n_agt:i[iter]*n_agt] """
+
+    con = x[(i["con"]-1)*n_agt:i["con"]*n_agt]
+    lab = x[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
+    inv = x[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
+    knx = x[(i["knx"]-1)*n_agt:i["knx"]*n_agt]
 
     to_print = np.hstack((obj, x))
 
@@ -134,5 +136,6 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     res['con'] = con
     res['lab'] = lab
     res['inv'] = inv
+    res['knx'] = knx
     res['ctt'] = ctt
     return res
