@@ -22,7 +22,7 @@ import cyipopt
 def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=False):
 
     # IPOPT PARAMETERS below "
-    N = n_pol * n_agt  # number of vars
+    N = n_pol*n_agt  # number of vars
     M = n_ctt  # number of constraints
     NELE_JAC = N * M
     NELE_HESS = (N+1)*N/2  # number of non-zero entries of Hess matrix
@@ -44,7 +44,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     Z_U = np.empty(N)
 
     # get coords of an individual grid points
-    #grid_pt_box = k_init
+    grid_pt_box = k_init
     X_L[(i_con-1)*n_agt:i_con*n_agt] = con_L
     X_U[(i_con-1)*n_agt:i_con*n_agt] = con_U
 
@@ -55,20 +55,21 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     X_U[(i_inv-1)*n_agt:i_inv*n_agt] = inv_U
 
     # Set bounds for the constraints
-    #G_L[(i_con-1)*n_agt:i_con*n_agt] = con_L
-    #G_U[(i_con-1)*n_agt:i_con*n_agt] = con_U
+    G_L[(i_con-1)*n_agt:i_con*n_agt] = con_L
+    G_U[(i_con-1)*n_agt:i_con*n_agt] = con_U
 
-    #G_L[(i_lab-1)*n_agt:i_lab*n_agt] = lab_L
-    #G_U[(i_lab-1)*n_agt:i_lab*n_agt] = lab_U
+    G_L[(i_lab-1)*n_agt:i_lab*n_agt] = lab_L
+    G_U[(i_lab-1)*n_agt:i_lab*n_agt] = lab_U
 
-    #G_L[(i_inv-1)*n_agt:i_inv*n_agt] = inv_L
-    #G_U[(i_inv-1)*n_agt:i_inv*n_agt] = inv_U
+    G_L[(i_inv-1)*n_agt:i_inv*n_agt] = inv_L
+    G_U[(i_inv-1)*n_agt:i_inv*n_agt] = inv_U
 
     #for the market clearing constraints
     
+    mcl_L = mcl_U = 0.0
     
-    G_L[:] = mcl_L
-    G_U[:] = mcl_U
+    G_L[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_L
+    G_U[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_U
 
     # initial guesses for first iteration (aka a warm start)
     mu = 0.5
@@ -78,7 +79,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     X[(i_con-1)*n_agt:i_con*n_agt] = con_init
     X[(i_lab-1)*n_agt:i_lab*n_agt] = lab_init
-    X[(i_inv-1)*n_agt:i_inv*n_agt] = inv_init
+    #X[(i_inv-1)*n_agt:i_inv*n_agt] = inv_init
 
     HS07 = ipopt_obj(X, n_agents=n_agt, k_init=k_init, NELE_JAC=NELE_JAC, NELE_HESS=NELE_HESS, gp_old=gp_old, initial=initial, verbose=verbose) 
 

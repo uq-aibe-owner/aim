@@ -43,8 +43,9 @@ def EV_F_ITER(X, kap, n_agt, gp_old):
     con=X[(i_con-1)*n_agt:i_con*n_agt]
     lab=X[(i_lab-1)*n_agt:i_lab*n_agt]
     inv=X[(i_inv-1)*n_agt:i_inv*n_agt]
-    kap_nxt=X[(i_inv-1)*n_agt:i_inv*n_agt]
+    #kap_nxt=X[(i_inv-1)*n_agt:i_inv*n_agt]
 
+    kap_nxt= (1-delta)*kap + inv
 
     
     # initialize correct data format for training point
@@ -128,22 +129,28 @@ def EV_GRAD_F_ITER(X, kap, n_agt, gp_old):
 #   Equality constraints for the first time step of the model
       
 def EV_G(X, kap, n_agt):
-    M=n_ctt*n_agt
+    M=n_ctt
     G=np.empty(M, float)
     
     # Extract Variables
     con=X[(i_con-1)*n_agt:i_con*n_agt]
     lab=X[(i_lab-1)*n_agt:i_lab*n_agt]
     inv=X[(i_inv-1)*n_agt:i_inv*n_agt]
-    kap_nxt=X[(i_kap_nxt-1)*n_agt:i_kap_nxt*n_agt]
+    #kap_nxt=X[(i_kap_nxt-1)*n_agt:i_kap_nxt*n_agt]
+
+    f_prod=output_f(kap, lab)
 
     # pull in constraints
-    dct_ctt = fcn_ctt(con, inv, lab, kap, kap_nxt)
+    #dct_ctt = fcn_ctt(con, inv, lab, kap, kap_nxt)
     # apply constraints
-    for iter in dct_ctt_ind_key:
-        print(len(dct_ctt[iter]))
-        G[(dct_ctt_ind[iter]-1)*n_agt:dct_ctt_ind[iter]*n_agt] = dct_ctt[iter]
+    #for iter in dct_ctt_ind_key:
+        #G[(dct_ctt_ind[iter]-1)*n_agt:dct_ctt_ind[iter]*n_agt] = dct_ctt[iter]
 
+    G[(i_con-1)*n_agt:i_con*n_agt] = con
+    G[(i_lab-1)*n_agt:i_lab*n_agt] = lab
+    G[(i_inv-1)*n_agt:i_inv*n_agt] = inv
+
+    G[(i_mcl-1)*n_agt:i_mcl*n_agt]=con + inv - f_prod
 
     return G
 
