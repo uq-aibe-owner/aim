@@ -16,14 +16,18 @@ from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ExpSineSquared, DotProduct,
                                               ConstantKernel)
 
+from datetime import datetime
+from numpy.random import PCG64
 
 #======================================================================    
 # Routine compute the errors
 def ls_error(n_agents, t1, t2, num_points):
     file=open('errors.txt', 'w')
-    
-    np.random.seed(0)
-    unif=np.random.rand(num_points, n_agents)
+    now = datetime.now()
+    dt = int(now.strftime("%H%M%S%f"))
+    print("Time seed = ", dt)
+    rng = np.random.default_rng(dt)
+    unif=rng.uniform(0, 1, (num_points, n_agents))
     #sample of states
     kap_smp = kap_L+(unif)*(kap_U-kap_L)
     to_print=np.empty((1,3))
@@ -31,7 +35,9 @@ def ls_error(n_agents, t1, t2, num_points):
     for i in range(t1, t2-1):
         sum_diffs=0
         diff = 0
-      
+        unif=rng.uniform(0, 1, (num_points, n_agents))
+        #sample of states
+        kap_smp = kap_L+(unif)*(kap_U-kap_L)
         # Load the model from the previous iteration step
         restart_data = filename + str(i) + ".pcl"
         with open(restart_data, 'rb') as fd_old:

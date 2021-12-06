@@ -94,7 +94,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     nlp.add_option("obj_scaling_factor", -1.00)  # max function
     nlp.add_option("mu_strategy", "adaptive")
-    nlp.add_option("tol", 1e-4)
+    nlp.add_option("tol", alphaSK)
     nlp.add_option("print_level", 0)
     nlp.add_option("hessian_approximation", "limited-memory")
 

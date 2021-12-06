@@ -26,7 +26,8 @@ import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 import pickle
 import time
-
+from numpy.random import PCG64
+from datetime import datetime
 # ======================================================================
 # Start with Value Function Iteration
 
@@ -35,7 +36,10 @@ import time
 
 start = time.time()
 
-
+now = datetime.now()
+dt = int(now.strftime("%H%M%S%f"))
+rngm = np.random.default_rng(dt)  # fix seed #move to main so it doesnt re-initialise
+#print(rng)
 
 for iter in range(numstart, numits):
 
@@ -108,7 +112,7 @@ def get_values(kap):
     return values
 
 def generate_random_k_vals(): 
-    return np.random.uniform(kap_L+0.2, kap_U-0.2, (No_samples, n_agt)) 
+    return rngm.uniform(kap_L+0.2, kap_U-0.2, (No_samples, n_agt)) 
 
 def solve_for_kvals(kap, n_agt, gp_old): 
 
@@ -123,8 +127,6 @@ def convergence_check():
     # iterate and then testing on the optimized value #v_old - val_tst
 
     # load the final instance of Gaussian Process
-
-    np.random.seed(0)
 
     gp_old = get_gaussian_process() 
 

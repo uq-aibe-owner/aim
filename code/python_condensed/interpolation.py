@@ -23,12 +23,13 @@ import pickle
 import os
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel, Matern
-
+from numpy.random import PCG64
+from datetime import datetime
 # ======================================================================
 
 
+#def GPR_iter(iteration, rng, save_data=True):
 def GPR_iter(iteration, save_data=True):
-
     
     if iteration == 1: 
         gp_old = None 
@@ -42,9 +43,12 @@ def GPR_iter(iteration, save_data=True):
         fd_old.close()
 
     ##generate sample aPoints
-    np.random.seed(666)  # fix seed #move to main so it doesnt re-initialise
+    now = datetime.now()
+    dt = int(now.strftime("%H"))#%M%S%f"))
+    # fix seed
+    rng = np.random.default_rng(dt)
     dim = n_agt
-    Xtraining = np.random.uniform(kap_L, kap_U, (No_samples, dim))
+    Xtraining = rng.uniform(kap_L, kap_U, (No_samples, dim))
     y = np.zeros(No_samples, float)  # training targets
 
     ctnr = []
@@ -82,7 +86,7 @@ def GPR_iter(iteration, save_data=True):
     # print Xtraining[iI], y[iI]
 
     # Instantiate a Gaussian Process model
-    kernel = RBF(length_scale_bounds=length_scale_bounds) 
+    kernel = RBF()#length_scale_bounds=length_scale_bounds) 
 
     # Instantiate a Gaussian Process model
     # kernel = 1.0 * RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
@@ -93,7 +97,7 @@ def GPR_iter(iteration, save_data=True):
     # kernel = 1.0 * RBF(length_scale=100.0, length_scale_bounds=(1e-1, 2e2))
     # kernel = 1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0),nu=1.5)
 
-    gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10, alpha=alphaSK)
+    gp = GaussianProcessRegressor(kernel=kernel, alpha=alphaSK)#n_restarts_optimizer=10, alpha=alphaSK)
 
     # Fit to data using Maximum Likelihood Estimation of the parameters
     gp.fit(Xtraining, y)

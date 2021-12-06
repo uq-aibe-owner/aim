@@ -16,12 +16,22 @@ import numpy as np
 
 # Move all to NL solver.py
 
-verbose = False 
-economic_verbose = False
+verbose = False
+economic_verbose = True
 
 # How many training points for GPR
 n_agt = 2  # number of continuous dimensions of the model
 No_samples = 10 * n_agt
+# control of iterations
+numstart = 1  # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
+numits = 15  # which is the iteration to end
+
+#length_scale_bounds=(10e-1,10e1)
+
+alphaSK = 10e-3
+
+filename = "restart/restart_file_step_"  # folder with the restart/result files
+
 
 # arbitrary indices for the policy variables 
 
@@ -30,14 +40,29 @@ i_pol = {
     "lab": 2,
     "inv": 3,
     "knx": 4,
-    "INT": 5,
-    "INV": 6,
-    "int": 7
+    #"INT": 5,
+    #"INV": 6,
+    #"int": 7
     #"uty": 8,
     #""
 }
 
+""" d_pol = {
+    "con": 1,
+    "lab": 1,
+    "inv": 1,
+    "knx": 1,
+    "INT": 2,
+    "INV": 2,
+    "int": 1
+}
+ """
+
+
 # number of policy variables, eg: con, lab, inv.
+""" for iter in 
+ """
+
 n_pol = len(i_pol)*n_agt
 
 # creating variable names from policy variable dict
@@ -68,15 +93,6 @@ i_ctt_key = list(i_ctt.keys())
     # accounting for how policy variables are in the constraints vector
     globals()["i_"+var] = i_ctt[var] #len(i_pol)+ """
 
-# control of iterations
-numstart = 3  # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
-numits = 8  # which is the iteration to end
-
-length_scale_bounds=(10e-5,10e5)
-
-alphaSK = 10e-3
-
-filename = "restart/restart_file_step_"  # folder with the restart/result files
 
 # ======================================================================
 # Move this all to to econ.py
@@ -149,7 +165,7 @@ def f_ctt(con, inv, lab, kap, knx):
     # canonical market clearing constraint
     e_ctt["mcl"] = con + inv - f_prod
     e_ctt["knx"] = (1-delta)*kap + inv - knx
-    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
+#    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
 #    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
     return e_ctt
 
