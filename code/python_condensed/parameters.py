@@ -20,15 +20,16 @@ verbose = False
 economic_verbose = True
 
 # How many training points for GPR
-n_agt = 2  # number of continuous dimensions of the model
+ # number of continuous dimensions of the model
+n_agt = 2 
 No_samples = 10 * n_agt
 # control of iterations
-numstart = 1  # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
-numits = 9  # which is the iteration to end
+numstart = 1 # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
+numits = 10  # which is the iteration to end
 
-#length_scale_bounds=(10e-1,10e1)
+length_scale_bounds=(10e-2,10e1)
 
-alphaSK = 10e-1
+alphaSK = 10e-3
 
 filename = "restart/restart_file_step_"  # folder with the restart/result files
 
@@ -98,18 +99,18 @@ i_ctt_key = list(i_ctt.keys())
 # Move this all to to econ.py
 # Model Paramters
 
-beta = 0.5
-rho = 0.95
-zeta = 0.0
-psi = 0.86
+beta = 0.99
+#rho = 0.95
+#zeta = 0.0
+psi = 0.75
 gamma = 2.0
-delta = 0.4
+delta = 0.1
 eta = 1
 big_A = (1.0 - beta) / (psi * beta)
 
 # Ranges For States
-kap_L = 0.2
-kap_U = 3
+kap_L = 2
+kap_U = 5
 range_cube = kap_U - kap_L  # range of [0..1]^d in 1D
 
 # Ranges for Controls
@@ -122,7 +123,10 @@ lab_U = 10.0
 inv_L = 1e-2
 inv_U = 10.0
 
-mcl_L = mcl_U = 0.0
+mcl_L = -1e-1
+mcl_U = 1e-1
+
+
 
 # ======================================================================
 

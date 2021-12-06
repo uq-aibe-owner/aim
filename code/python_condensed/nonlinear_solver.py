@@ -131,7 +131,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     #    f.write(str(num)+"\t")
     # f.write("\n")
     # f.close()
-    res = dict();
+    res = dict()
     res['obj'] = obj
     res['con'] = con
     res['lab'] = lab
