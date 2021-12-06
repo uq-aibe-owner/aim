@@ -24,11 +24,11 @@ n_agt = 2  # number of continuous dimensions of the model
 No_samples = 10 * n_agt
 # control of iterations
 numstart = 1  # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
-numits = 15  # which is the iteration to end
+numits = 9  # which is the iteration to end
 
 #length_scale_bounds=(10e-1,10e1)
 
-alphaSK = 10e-3
+alphaSK = 10e-1
 
 filename = "restart/restart_file_step_"  # folder with the restart/result files
 
