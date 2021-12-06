@@ -68,7 +68,9 @@ def ls_error(n_agents, t1, t2, num_points):
         to_print[0,2]= average
         
         np.savetxt(file, to_print, fmt='%2.16f')
-        print(diff)
+        np.set_printoptions(suppress=True)
+        msg=diff
+        print(msg)
         print("===================================")
 
         
