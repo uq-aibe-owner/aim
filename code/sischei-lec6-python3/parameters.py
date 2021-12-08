@@ -15,7 +15,7 @@ import numpy as np
 # ======================================================================
 
 verbose = False 
-economic_verbose = False
+economic_verbose = True
 
 # How many training points for GPR
 n_agt = 2  # number of continuous dimensions of the model

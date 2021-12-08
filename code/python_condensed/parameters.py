@@ -33,22 +33,21 @@ alphaSK = 10e-3
 
 filename = "restart/restart_file_step_"  # folder with the restart/result files
 
-
 # arbitrary indices for the policy variables 
-
 i_pol = {
     "con": 1,
     "lab": 2,
     "inv": 3,
     "knx": 4,
-    #"INT": 5,
-    #"INV": 6,
-    #"int": 7
-    #"uty": 8,
+    "INT": 5,
+    "INV": 6,
+    "int": 7
+    #"uty": 8
     #""
 }
 
-""" d_pol = {
+# dimensions of each policy variable
+d_pol = {
     "con": 1,
     "lab": 1,
     "inv": 1,
@@ -57,46 +56,44 @@ i_pol = {
     "INV": 2,
     "int": 1
 }
- """
 
-
-# number of policy variables, eg: con, lab, inv.
-""" for iter in 
- """
-
-n_pol = len(i_pol)*n_agt
-
-# creating variable names from policy variable dict
 # creating list of the dict keys
 i_pol_key = list(i_pol.keys()) 
-""" for iter in range(len(i_pol)):
-    # retrieve current iterations policy variable string
-    var = i_pol_key[iter]
-    # turn into a variable name with "i_" in front
-    globals()["i_"+var] = i_pol[var] """
+
+# number of policy variables in total, to be used for lengths of X/x vectors
+n_pol = 0
+for iter in i_pol_key:
+    n_pol += d_pol[iter]   
+    
+n_pol *= n_agt
 
 # setup variables for constraints
 i_ctt = {
     "mcl": 1,
-    "knx": 2
+    "cnx": 2, # has to be a different key name to knx for combined dicts
+    "cnv": 3, # same story as above
+    "cnt": 4  # same
 }
 
-# merge two index dicts
+# merge two index dicts into one for referencing
 i = {**i_pol, **i_ctt}
 
 # number of constraints
-n_ctt = n_agt*len(i_ctt) #n_pol +
+n_ctt = n_agt*len(i_ctt) 
 
-# creating variable names from constraint variable dict (similar to as with policy dict above)
+# for use in running through loops
 i_ctt_key = list(i_ctt.keys()) 
-"""for iter in range(len(i_ctt)):
-    var = i_ctt_key[iter]
-    # accounting for how policy variables are in the constraints vector
-    globals()["i_"+var] = i_ctt[var] #len(i_pol)+ """
 
+# dict for indices of each policy variable in X/x
+I_pol = dict()
+# temporary variable to keep track of previous highest index
+prv_ind = 0
+# allocating lists of indices to each policy variable as a key
+for iter in i_pol_key:
+    I_pol[iter] = np.arange(prv_ind,prv_ind+n_agt**d_pol[iter])
+    prv_ind += n_agt**d_pol[iter]
 
 # ======================================================================
-# Move this all to to econ.py
 # Model Paramters
 
 beta = 0.99
@@ -123,10 +120,20 @@ lab_U = 10.0
 inv_L = 1e-2
 inv_U = 10.0
 
+knx_L = 1e-2
+knx_U = 10.0
+
+INV_L = 1e-2
+INV_U = 10.0
+
+INT_L = 1e-2
+INT_U = 10.0
+
+int_L = 1e-2
+int_U = 10.0
+
 mcl_L = -1e-1
 mcl_U = 1e-1
-
-
 
 # ======================================================================
 
@@ -157,19 +164,21 @@ def utility(con=[], lab=[]):
 # output_f 
 
 def output_f(kap=[], lab=[]):
-    fun_val = big_A*(kap**psi)*(lab**(1.0 - psi))
+    fun_val = big_A*(np.power(kap,psi))*(np.power(lab,(1.0 - psi)))
     return fun_val
 
 #======================================================================
 # Constraints
 
-def f_ctt(con, inv, lab, kap, knx):
+def f_ctt(con, inv, lab, kap, knx, INV, INT, int):
     f_prod=output_f(kap, lab)
     e_ctt = dict()
     # canonical market clearing constraint
     e_ctt["mcl"] = con + inv - f_prod
-    e_ctt["knx"] = (1-delta)*kap + inv - knx
-#    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
+    e_ctt["cnx"] = (1-delta)*kap + inv - knx
+    # intermediate sum constraints, just switch the first letter of the policy variables they are linked to with a "c", could change
+    e_ctt["cnv"] = np.sum(INV,axis=0).tolist() - inv
+    e_ctt["cnt"] = np.sum(INT,axis=0).tolist() - int
 #    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
     return e_ctt
 

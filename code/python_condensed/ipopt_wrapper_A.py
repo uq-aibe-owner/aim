@@ -16,10 +16,22 @@ import numpy as np
 def EV_F(X, kap, n_agt):
     
     # Extract Variables
-    con=X[(i["con"]-1)*n_agt:i["con"]*n_agt]
+    # this loop extracts the variables more expandably than doing them individualy as before
+    for iter in i_pol_key:
+        # forms the  2d intermediate variables into globals of the same name but in matrix form
+        if d_pol[iter] == 2:
+            globals()[iter] = np.zeros((n_agt,n_agt))
+            for row in range(n_agt):
+                for col in range(n_agt):
+                    globals()[iter][row,col] = X[I_pol[iter][0]+col+row*n_agt]
+        else:
+            # forms the 1d intermediate variables into globals of the same name in vector(list) form
+            globals()[iter] = [X[ring] for ring in I_pol[iter]]
+
+    """ con=X[(i["con"]-1)*n_agt:i["con"]*n_agt]
     lab=X[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
     inv=X[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
-    knx=X[(i["knx"]-1)*n_agt:i["knx"]*n_agt]
+    knx=X[(i["knx"]-1)*n_agt:i["knx"]*n_agt] """
     
     # Compute Value Function
     VT_sum=utility(con, lab) + beta*V_INFINITY(knx)
@@ -39,13 +51,18 @@ def V_INFINITY(kap=[]):
 def EV_F_ITER(X, kap, n_agt, gp_old):
     
     # Extract Variables
-    con=X[(i["con"]-1)*n_agt:i["con"]*n_agt]
-    lab=X[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
-    inv=X[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
-    knx=X[(i["knx"]-1)*n_agt:i["knx"]*n_agt]
+    for iter in i_pol_key:
+        # forms the  2d intermediate variables into globals of the same name but in matrix form
+        if d_pol[iter] == 2:
+            globals()[iter] = np.zeros((n_agt,n_agt))
+            for row in range(n_agt):
+                for col in range(n_agt):
+                    globals()[iter][row,col] = X[I_pol[iter][0]+col+row*n_agt]
+        else:
+            # forms the 1d intermediate variables into globals of the same name in vector(list) form
+            globals()[iter] = [X[ring] for ring in I_pol[iter]]
 
     #knx= (1-delta)*kap + inv
-
     
     # initialize correct data format for training point
     s = (1,n_agt)
@@ -68,7 +85,6 @@ def EV_GRAD_F(X, kap, n_agt):
     N=len(X)
     GRAD=np.zeros(N, float) # Initial Gradient of Objective Function
     h=1e-4
-    
     
     for ixN in range(N):
         xAdj=np.copy(X)
@@ -101,7 +117,6 @@ def EV_GRAD_F_ITER(X, kap, n_agt, gp_old):
     GRAD=np.zeros(N, float) # Initial Gradient of Objective Function
     h=1e-4
     
-    
     for ixN in range(N):
         xAdj=np.copy(X)
         
@@ -132,13 +147,16 @@ def EV_G(X, kap, n_agt):
     G=np.empty(M, float)
     
     # Extract Variables
-    """ for iter in i_pol_key:
-        globals()[iter] = X[(i[iter]-1)*n_agt:i[iter]*n_agt] """
-
-    con=X[(i["con"]-1)*n_agt:i["con"]*n_agt]
-    lab=X[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
-    inv=X[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
-    knx=X[(i["knx"]-1)*n_agt:i["knx"]*n_agt]
+    for iter in i_pol_key:
+        # forms the  2d intermediate variables into globals of the same name but in matrix form
+        if d_pol[iter] == 2:
+            globals()[iter] = np.zeros((n_agt,n_agt))
+            for row in range(n_agt):
+                for col in range(n_agt):
+                    globals()[iter][row,col] = X[I_pol[iter][0]+col+row*n_agt]
+        else:
+            # forms the 1d intermediate variables into globals of the same name in vector(list) form
+            globals()[iter] = [X[ring] for ring in I_pol[iter]]
 
     #knx= (1-delta)*kap + inv
 
@@ -146,16 +164,9 @@ def EV_G(X, kap, n_agt):
 
     # pull in constraints
     e_ctt = f_ctt(con, inv, lab, kap, knx)
-    # apply constraints
+    # apply all constraints with this one loop
     for iter in i_ctt_key:
         G[(i[iter]-1)*n_agt:i[iter]*n_agt] = e_ctt[iter]
-
-    """ G[(i["con"]-1)*n_agt:i["con"]*n_agt] = con
-    G[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab
-    G[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv """
-
-    """ G[(i_mcl-1)*n_agt:i_mcl*n_agt]=con + inv - f_prod
-    G[(i["knx"]-1)*n_agt:i["knx"]*n_agt]=(1-delta)*kap + inv - knx """
 
     return G
 
@@ -170,9 +181,11 @@ def EV_G_ITER(X, kap, n_agt):
 #   for first time step
     
 def EV_JAC_G(X, flag, kap, n_agt):
-    N=len(X)
+    N=n_pol
     M=n_ctt
+    #print(N, "  ",M) #testing testing
     NZ=M*N
+    #print(NZ) #testing testing
     A=np.empty(NZ, float)
     ACON=np.empty(NZ, int)
     AVAR=np.empty(NZ, int)    
