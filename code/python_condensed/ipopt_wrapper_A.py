@@ -163,6 +163,7 @@ def EV_G(X, kap, n_agt):
     #f_prod=output_f(kap, lab)
 
     # pull in constraints
+    
     e_ctt = f_ctt(con, inv, lab, kap, knx, INV, ITM, itm)
     # apply all constraints with this one loop
     for iter in i_ctt_key:
