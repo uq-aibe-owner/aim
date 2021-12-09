@@ -160,10 +160,10 @@ def EV_G(X, kap, n_agt):
 
     #knx= (1-delta)*kap + inv
 
-    f_prod=output_f(kap, lab)
+    #f_prod=output_f(kap, lab)
 
     # pull in constraints
-    e_ctt = f_ctt(con, inv, lab, kap, knx)
+    e_ctt = f_ctt(con, inv, lab, kap, knx, INV, ITM, itm)
     # apply all constraints with this one loop
     for iter in i_ctt_key:
         G[(i[iter]-1)*n_agt:i[iter]*n_agt] = e_ctt[iter]
@@ -184,10 +184,9 @@ def EV_JAC_G(X, flag, kap, n_agt):
     N=n_pol
     M=n_ctt
     #print(N, "  ",M) #testing testing
-    NZ=M*N
-    #print(NZ) #testing testing
+    NZ=n_pol*n_ctt # J - could it be this?
     A=np.empty(NZ, float)
-    ACON=np.empty(NZ, int)
+    ACON=np.empty(NZ, int) # its cause int is already a global variable cause i made it
     AVAR=np.empty(NZ, int)    
     
     # Jacobian matrix structure

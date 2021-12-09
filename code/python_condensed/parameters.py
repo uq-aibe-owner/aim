@@ -39,9 +39,9 @@ i_pol = {
     "lab": 2,
     "inv": 3,
     "knx": 4,
-    "INT": 5,
+    "ITM": 5,
     "INV": 6,
-    "int": 7
+    "itm": 7
     #"uty": 8
     #""
 }
@@ -52,9 +52,9 @@ d_pol = {
     "lab": 1,
     "inv": 1,
     "knx": 1,
-    "INT": 2,
+    "ITM": 2,
     "INV": 2,
-    "int": 1
+    "itm": 1
 }
 
 # creating list of the dict keys
@@ -72,7 +72,7 @@ i_ctt = {
     "mcl": 1,
     "cnx": 2, # has to be a different key name to knx for combined dicts
     "cnv": 3, # same story as above
-    "cnt": 4  # same
+    "ctm": 4  # same
 }
 
 # merge two index dicts into one for referencing
@@ -126,11 +126,11 @@ knx_U = 10.0
 INV_L = 1e-2
 INV_U = 10.0
 
-INT_L = 1e-2
-INT_U = 10.0
+ITM_L = 1e-2
+ITM_U = 10.0
 
-int_L = 1e-2
-int_U = 10.0
+itm_L = 1e-2
+itm_U = 10.0
 
 mcl_L = -1e-1
 mcl_U = 1e-1
@@ -163,22 +163,22 @@ def utility(con=[], lab=[]):
 #====================================================================== 
 # output_f 
 
-def output_f(kap=[], lab=[]):
+def output_f(kap, lab):
     fun_val = big_A*(np.power(kap,psi))*(np.power(lab,(1.0 - psi)))
     return fun_val
 
 #======================================================================
 # Constraints
 
-def f_ctt(con, inv, lab, kap, knx, INV, INT, int):
+def f_ctt(con, inv, lab, kap, knx, INV, ITM, itm):
     f_prod=output_f(kap, lab)
     e_ctt = dict()
     # canonical market clearing constraint
-    e_ctt["mcl"] = con + inv - f_prod
+    e_ctt["mcl"] = np.add(con,inv) - f_prod
     e_ctt["cnx"] = (1-delta)*kap + inv - knx
     # intermediate sum constraints, just switch the first letter of the policy variables they are linked to with a "c", could change
-    e_ctt["cnv"] = np.sum(INV,axis=0).tolist() - inv
-    e_ctt["cnt"] = np.sum(INT,axis=0).tolist() - int
+    e_ctt["cnv"] = np.sum(INV,axis=0) - inv
+    e_ctt["ctm"] = np.sum(ITM,axis=0) - itm
 #    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
     return e_ctt
 
