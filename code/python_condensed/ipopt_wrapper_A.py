@@ -15,7 +15,7 @@ import numpy as np
         
 def EV_F(X, kap, n_agt):
     
-    # Extract Variables
+    """ # Extract Variables
     # this loop extracts the variables more expandably than doing them individualy as before
     for iter in i_pol_key:
         # forms the  2d intermediate variables into globals of the same name but in matrix form
@@ -26,22 +26,17 @@ def EV_F(X, kap, n_agt):
                     globals()[iter][row,col] = X[I_pol[iter][0]+col+row*n_agt]
         else:
             # forms the 1d intermediate variables into globals of the same name in vector(list) form
-            globals()[iter] = [X[ring] for ring in I_pol[iter]]
-
-    """ con=X[(i["con"]-1)*n_agt:i["con"]*n_agt]
-    lab=X[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
-    inv=X[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
-    knx=X[(i["knx"]-1)*n_agt:i["knx"]*n_agt] """
+            globals()[iter] = [X[ring] for ring in I_pol[iter]] """
     
     # Compute Value Function
-    VT_sum=utility(con, lab) + beta*V_INFINITY(knx)
+    VT_sum=utility(X[I_pol["con"]], X[I_pol["lab"]]) + beta*V_INFINITY(X[I_pol["knx"]])
        
     return VT_sum
 
 # initial guess of the value function
 def V_INFINITY(kap=[]):
     e=np.ones(len(kap))
-    c=output_f(kap,e)
+    c=output_f(kap,e, kap/3)
     v_infinity=utility(c,e)/(1-beta)
     return v_infinity
 
@@ -50,32 +45,17 @@ def V_INFINITY(kap=[]):
     
 def EV_F_ITER(X, kap, n_agt, gp_old):
     
-    # Extract Variables
-    for iter in i_pol_key:
-        # forms the  2d intermediate variables into globals of the same name but in matrix form
-        if d_pol[iter] == 2:
-            globals()[iter] = np.zeros((n_agt,n_agt))
-            for row in range(n_agt):
-                for col in range(n_agt):
-                    globals()[iter][row,col] = X[I_pol[iter][0]+col+row*n_agt]
-        else:
-            # forms the 1d intermediate variables into globals of the same name in vector(list) form
-            globals()[iter] = [X[ring] for ring in I_pol[iter]]
-
-    #knx= (1-delta)*kap + inv
-    
     # initialize correct data format for training point
     s = (1,n_agt)
     Xtest = np.zeros(s)
-    Xtest[0,:] = knx
+    Xtest[0,:] = X[I_pol["knx"]]
     
     # interpolate the function, and get the point-wise std.
     V_old, sigma_test = gp_old.predict(Xtest, return_std=True)
     
-    VT_sum = utility(con, lab) + beta*V_old
+    VT_sum = utility(X[I_pol["con"]], X[I_pol["lab"]]) + beta*V_old
     
     return VT_sum
-    
     
 #=======================================================================
 #   Computation of gradient (first order finite difference) of initial objective function 
@@ -145,29 +125,12 @@ def EV_GRAD_F_ITER(X, kap, n_agt, gp_old):
 def EV_G(X, kap, n_agt):
     M=n_ctt
     G=np.empty(M, float)
-    
-    # Extract Variables
-    for iter in i_pol_key:
-        # forms the  2d intermediate variables into globals of the same name but in matrix form
-        if d_pol[iter] == 2:
-            globals()[iter] = np.zeros((n_agt,n_agt))
-            for row in range(n_agt):
-                for col in range(n_agt):
-                    globals()[iter][row,col] = X[I_pol[iter][0]+col+row*n_agt]
-        else:
-            # forms the 1d intermediate variables into globals of the same name in vector(list) form
-            globals()[iter] = [X[ring] for ring in I_pol[iter]]
-
-    #knx= (1-delta)*kap + inv
-
-    #f_prod=output_f(kap, lab)
 
     # pull in constraints
-    
-    e_ctt = f_ctt(con, inv, lab, kap, knx, INV, ITM, itm)
+    e_ctt = f_ctt(X[I_pol["con"]], X[I_pol["sav"]], X[I_pol["lab"]], kap, X[I_pol["knx"]], X[I_pol["SAV"]], X[I_pol["ITM"]], X[I_pol["itm"]])
     # apply all constraints with this one loop
     for iter in i_ctt_key:
-        G[(i[iter]-1)*n_agt:i[iter]*n_agt] = e_ctt[iter]
+        G[I_ctt[iter]] = e_ctt[iter] # -J
 
     return G
 

@@ -67,14 +67,14 @@ def GPR_iter(iteration, save_data=True):
         msg = "Constraint values: " + str(ctt) + os.linesep
         msg += "a quick check using output_f - consumption - investment" + os.linesep
         msg += (
-            str(output_f(Xtraining[iI], res['lab']) - res['con'] - res['inv']) + os.linesep
+            str(output_f(Xtraining[iI], res['lab'], res["itm"]) - res['con'] - res['sav']) + os.linesep
         )
         msg += (
             "and consumption, labor and investment are, respectively,"
             + os.linesep
             + str(res['con'])
             + str(res['lab'])
-            + str(res['inv'])
+            + str(res['sav'])
         )
         if economic_verbose:
             print("{}".format(msg))

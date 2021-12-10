@@ -48,49 +48,16 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     # set bounds for policy variables
     for iter in i_pol_key:
-        for ring in I_pol[iter]:
-            X_L[ring] = globals()[iter+"_L"] 
-            X_U[ring] = globals()[iter+"_U"] 
-    
-
-    """ X_L[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_L
-    X_U[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_U
-
-    X_L[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_L
-    X_U[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_U
-
-    X_L[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_L
-    X_U[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_U """
+        X_L[I_pol[iter]] = pol_L[i[iter]]
+        X_U[I_pol[iter]] = pol_U[i[iter]]
+        # initial guesses for first iteration (aka a warm start)
+        if iter != "sav":
+            X[I_pol[iter]] = 0.5*X_L[I_pol[iter]]+0.5*X_U[I_pol[iter]]
 
     # Set bounds for the constraints
-    """ G_L[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_L
-    G_U[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_U
-
-    G_L[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_L
-    G_U[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_U
-
-    G_L[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_L
-    G_U[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_U """
-
-    #for the market clearing constraints
-    """ G_L[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_L
-    G_U[(i_mcl-1)*n_agt:i_mcl*n_agt] = mcl_U """
-    G_L[:] = mcl_L
-    G_U[:] = mcl_U
-
-    # initial guesses for first iteration (aka a warm start)
-    mu = 0.5
-    for iter in i_pol_key:
-        # makes global variables for ???_iter for all policy variables, using same formulae as before, just in a one line loop this time
-        globals()[iter+"_init"] = np.multiply(mu,[X_U[ring] for ring in I_pol[iter]])+np.multiply((1-mu),[X_L[ring] for ring in I_pol[iter]])
-
-    """ con_init = mu*X_U[(i["con"]-1)*n_agt:i["con"]*n_agt]+(1-mu)*X_L[(i["con"]-1)*n_agt:i["con"]*n_agt]
-    lab_init = mu*X_U[(i["lab"]-1)*n_agt:i["lab"]*n_agt]+(1-mu)*X_L[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
-    inv_init = mu*X_U[(i["inv"]-1)*n_agt:i["inv"]*n_agt]+(1-mu)*X_L[(i["inv"]-1)*n_agt:i["inv"]*n_agt] """
-
-    X[(i["con"]-1)*n_agt:i["con"]*n_agt] = con_init
-    X[(i["lab"]-1)*n_agt:i["lab"]*n_agt] = lab_init
-    #X[(i["inv"]-1)*n_agt:i["inv"]*n_agt] = inv_init
+    for iter in i_ctt_key:
+        G_L[I_ctt[iter]]=ctt_L[i[iter]]
+        G_U[I_ctt[iter]]=ctt_U[i[iter]]
 
     HS07 = ipopt_obj(X, n_agents=n_agt, k_init=k_init, NELE_JAC=NELE_JAC, NELE_HESS=NELE_HESS, gp_old=gp_old, initial=initial, verbose=verbose) 
 
@@ -125,24 +92,6 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     # obj: Objective value
     # status: Exit Status
 
-    # Unpack Consumption, Labor, and Investment (again with a loop)
-    # Extract Variables
-    for iter in i_pol_key:
-        # forms the  2d intermediate variables into globals of the same name but in matrix form
-        if d_pol[iter] == 2:
-            globals()[iter] = np.zeros((n_agt,n_agt))
-            for row in range(n_agt):
-                for col in range(n_agt):
-                    globals()[iter][row,col] = X[I_pol[iter][0]+col+row*n_agt]
-        else:
-            # forms the 1d intermediate variables into globals of the same name in vector(list) form
-            globals()[iter] = [X[ring] for ring in I_pol[iter]]
-
-    """ con = x[(i["con"]-1)*n_agt:i["con"]*n_agt]
-    lab = x[(i["lab"]-1)*n_agt:i["lab"]*n_agt]
-    inv = x[(i["inv"]-1)*n_agt:i["inv"]*n_agt]
-    knx = x[(i["knx"]-1)*n_agt:i["knx"]*n_agt] """
-
     to_print = np.hstack((obj, x))
 
     # == debug ==
@@ -154,9 +103,10 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     # f.close()
     res = dict()
     res['obj'] = obj
-    res['con'] = con
-    res['lab'] = lab
-    res['inv'] = inv
-    res['knx'] = knx
     res['ctt'] = ctt
+
+    for iter in i_pol_key:
+        res[iter] = x[I_pol[iter]]
+
     return res
+
