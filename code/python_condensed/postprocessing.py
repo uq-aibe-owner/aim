@@ -31,7 +31,8 @@ def ls_error(n_agents, t1, t2, num_points):
     #sample of states
     kap_smp = kap_L+(unif)*(kap_U-kap_L)
     to_print=np.empty((1,3))
-        
+    if (t1 == 1):
+        t1+1    
     for i in range(t1, t2-1):
         sum_diffs=0
         diff = 0

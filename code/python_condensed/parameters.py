@@ -22,12 +22,12 @@ economic_verbose = True
 n_agt = 2 
 No_samples = 10 * n_agt
 # control of iterations
-numstart = 1 # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
-numits = 3  # which is the iteration to end
+numstart = 3 # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
+numits = 4  # which is the iteration to end
 
 length_scale_bounds=(10e-2,10e1)
 
-alphaSK = 10e-1
+alphaSK = 1e-0
 
 filename = "restart/restart_file_step_"  # folder with the restart/result files
 
