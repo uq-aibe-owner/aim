@@ -15,7 +15,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ExpSineSquared, DotProduct,
                                               ConstantKernel)
-import nonlinear_solver_iterate as solver
+import nonlinear_solver as solver
 import os
 #======================================================================    
 # Routine compute the errors
@@ -26,9 +26,8 @@ def ls_error(n_agents, t1, t2, num_points):
     file=open('errors%s.txt' % i, 'w')
     
     np.random.seed(0)
-
     dim = n_agents
-    
+    k_test = np.random.uniform(kap_L, kap_U, (num_points, dim))
     # test target container
     y_test = np.zeros(num_points, float)
     to_print=np.empty((1,5))
@@ -38,7 +37,7 @@ def ls_error(n_agents, t1, t2, num_points):
     for i in range(t1-1, t2-1):
         sum_diffs=0
         diff = 0
-        k_test = np.random.uniform(k_bar, k_up, (num_points, dim))
+    
         # Load the model from the previous iteration step
         restart_data = filename + str(i) + ".pcl"
         with open(restart_data, 'rb') as fd_old:
@@ -59,7 +58,7 @@ def ls_error(n_agents, t1, t2, num_points):
         gp_old = gp
         # solve bellman equations at test points
         for j in range(len(k_test)):
-            y_test[j] = solver.iterate(k_test[j], n_agents, gp_old)[0]
+            y_test[j] = solver.iterate(k_test[j], n_agents, gp_old)["obj"]
 
         targ_new = y_test
         # plot predictive mean and 95% quantiles
@@ -80,7 +79,7 @@ def ls_error(n_agents, t1, t2, num_points):
         to_print[0,3]= max_diff_targ
         to_print[0,4]= avg_diff_targ
         msg="with k_test varying across iterates:"
-        msg+="alphaSK=" + str(alphaSK) + ",tolIpopt=" + str(tolIpopt)
+        msg+="alphaSK=" + str(alphaSK) + ",tolIpopt=" + str(alphaSK)
         msg+=",n_restarts_optimizer=" +str(n_restarts_optimizer)
         msg+=",numstart=" + str(numstart)
         msg+=",No_samples=" + str(No_samples)

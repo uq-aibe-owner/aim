@@ -22,13 +22,14 @@ economic_verbose = True
 n_agt = 2 
 No_samples = 10 * n_agt
 # control of iterations
-numstart = 3 # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
-numits = 4  # which is the iteration to end
+numstart = 2 # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
+fthrits = 2
+numits = numstart + fthrits  # which is the iteration to end
 
 length_scale_bounds=(10e-2,10e1)
 
 alphaSK = 1e-0
-
+n_restarts_optimizer=0
 filename = "restart/restart_file_step_"  # folder with the restart/result files
 
 # arbitrary indices for the policy variables 
