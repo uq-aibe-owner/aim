@@ -4,7 +4,7 @@
 #     solutions.
 #
 #     Simon Scheidegger, 01/19
-#     edited by Patrick O'Callaghan, with Cameron Gordon and Josh Aberdeen, 11/2021
+#     Cameron Gordon, 11/21 - updates to Python3 (print statements + pickle)
 #======================================================================
 
 import numpy as np
@@ -15,62 +15,79 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
                                               ExpSineSquared, DotProduct,
                                               ConstantKernel)
-
-from datetime import datetime
-from numpy.random import PCG64
-
+import nonlinear_solver_iterate as solver
+import os
 #======================================================================    
 # Routine compute the errors
 def ls_error(n_agents, t1, t2, num_points):
-    file=open('errors.txt', 'w')
-    now = datetime.now()
-    dt = int(now.strftime("%H%M%S%f"))
-    print("Time seed = ", dt)
-    rng = np.random.default_rng(dt)
-    unif=rng.uniform(0, 1, (num_points, n_agents))
-    #sample of states
-    kap_smp = kap_L+(unif)*(kap_U-kap_L)
-    to_print=np.empty((1,3))
-    if (t1 == 1):
-        t1+1    
-    for i in range(t1, t2-1):
+    i=1
+    while os.path.exists("errors%s.txt" % i):
+      i += 1
+    file=open('errors%s.txt' % i, 'w')
+    
+    np.random.seed(0)
+
+    dim = n_agents
+    
+    # test target container
+    y_test = np.zeros(num_points, float)
+    to_print=np.empty((1,5))
+
+    if (t1 == 1 & t2-t1 == 1):
+        t1+=1
+    for i in range(t1-1, t2-1):
         sum_diffs=0
         diff = 0
-        unif=rng.uniform(0, 1, (num_points, n_agents))
-        #sample of states
-        kap_smp = kap_L+(unif)*(kap_U-kap_L)
+        k_test = np.random.uniform(k_bar, k_up, (num_points, dim))
         # Load the model from the previous iteration step
         restart_data = filename + str(i) + ".pcl"
         with open(restart_data, 'rb') as fd_old:
             gp_old = pickle.load(fd_old)
             print("data from iteration step ", i , "loaded from disk")
         fd_old.close()      
-      
+
         # Load the model from the previous iteration step
         restart_data = filename + str(i+1) + ".pcl"
-        with open(restart_data, 'rb') as fd_new:
-            gp_new = pickle.load(fd_new)
+        with open(restart_data, 'rb') as fd:
+            gp = pickle.load(fd)
             print("data from iteration step ", i+1 , "loaded from disk")
-        fd_new.close()        
+        fd.close()
       
-        y_pred_old, sigma_old = gp_old.predict(kap_smp, return_std=True)
-        y_pred_new, sigma_new = gp_new.predict(kap_smp, return_std=True)
+        mean_old, sigma_old = gp_old.predict(k_test, return_std=True)
+        mean, sigma = gp.predict(k_test, return_std=True)
 
+        gp_old = gp
+        # solve bellman equations at test points
+        for j in range(len(k_test)):
+            y_test[j] = solver.iterate(k_test[j], n_agents, gp_old)[0]
+
+        targ_new = y_test
         # plot predictive mean and 95% quantiles
         #for j in range(num_points):
-            #print kap_smp[j], " ",y_pred_new[j], " ",y_pred_new[j] + 1.96*sigma_new[j]," ",y_pred_new[j] - 1.96*sigma_new[j]
+            #print k_test[j], " ",y_pred_new[j], " ",y_pred_new[j] + 1.96*sigma_new[j]," ",y_pred_new[j] - 1.96*sigma_new[j]
 
-        diff = y_pred_old-y_pred_new
-        max_abs_diff=np.amax(np.fabs(diff))
-        average = np.average(np.fabs(diff))
-        
+        diff_mean = mean_old - mean
+        max_diff_mean = np.amax(np.fabs(diff_mean))
+        avg_diff_mean = np.average(np.fabs(diff_mean))
+
+        diff_targ = mean - targ_new
+        max_diff_targ = np.amax(np.fabs(diff_targ))
+        avg_diff_targ = np.average(np.fabs(diff_targ))
+
         to_print[0,0]= i+1
-        to_print[0,1]= max_abs_diff
-        to_print[0,2]= average
-        
-        np.savetxt(file, to_print, fmt='%2.16f')
-        np.set_printoptions(suppress=True)
-        msg=str(diff) + ", max=" + str(max_abs_diff)
+        to_print[0,1]= max_diff_mean
+        to_print[0,2]= avg_diff_mean
+        to_print[0,3]= max_diff_targ
+        to_print[0,4]= avg_diff_targ
+        msg="with k_test varying across iterates:"
+        msg+="alphaSK=" + str(alphaSK) + ",tolIpopt=" + str(tolIpopt)
+        msg+=",n_restarts_optimizer=" +str(n_restarts_optimizer)
+        msg+=",numstart=" + str(numstart)
+        msg+=",No_samples=" + str(No_samples)
+        np.savetxt(file, to_print, header=msg, fmt='%2.16f')
+        msg = "Cauchy:" + str(diff_mean) + ", max = " + str(round(max_diff_mean,3))
+        msg += os.linesep
+        msg += "Absolute:" + str(diff_targ) + ", max = " + str(round(max_diff_targ,3))
         print(msg)
         print("===================================")
 
