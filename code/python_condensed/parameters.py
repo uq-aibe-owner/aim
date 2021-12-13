@@ -124,7 +124,7 @@ def utility(con=[], lab=[]):
 # output_f 
 
 def output_f(kap, lab, itm):
-    fun_val = big_A*(np.power(kap,phik))*(np.power(lab, phil))*(np.power(lab,(1.0 - phik - phil)))
+    fun_val = big_A*(np.power(kap,phik))*(np.power(lab, phil))*(np.power(itm,(1.0 - phik - phil)))
     return fun_val
 
 #======================================================================
