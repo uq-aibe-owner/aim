@@ -42,7 +42,6 @@ i_pol = {
     "SAV": 5,
     "itm": 6
 }
-
 # dimensions of each policy variable
 d_pol = {
     "con": 1,
@@ -61,7 +60,6 @@ i_ctt = {
     "savt": 2, # same story as above
     "itmt": 3  # same
 }
-
 d_ctt = {
     "mclt": 1,
     "knxt": 1, # has to be a different key name to knx for combined dicts

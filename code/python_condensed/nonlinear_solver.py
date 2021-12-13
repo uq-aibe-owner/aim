@@ -21,7 +21,6 @@ import cyipopt
 
 def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=False):
 
-    # IPOPT PARAMETERS below "
     N = n_pol  # number of vars
     M = n_ctt  # number of constraints
     NELE_JAC = N * M
