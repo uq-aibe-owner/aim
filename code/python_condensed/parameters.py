@@ -135,15 +135,19 @@ def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm):
 
     # Summing the 2d policy variables 
     SAV_com = np.zeros(n_agt, float)
+    SAV_add = np.zeros(n_agt, float)
     ITM_com = np.zeros(n_agt, float)
+    ITM_add = np.zeros(n_agt, float)
     for iter in range(n_agt):
         for ring in range(n_agt):
             SAV_com[iter] *= SAV[iter+n_agt*ring]**xi[ring]
+            SAV_add[iter] += SAV[iter*n_agt+ring]
             ITM_com[iter] *= ITM[iter+n_agt*ring]**mu[ring]
+            ITM_add[iter] += ITM[iter*n_agt+ring]
 
     e_ctt = dict()
     # canonical market clearing constraint
-    e_ctt["mclt"] = np.add(con,sav) - f_prod
+    e_ctt["mclt"] = np.add(con, SAV_add, ITM_add)- f_prod
     e_ctt["knxt"] = (1-delta)*kap + sav - knx
     # intermediate sum constraints, just switch the first letter of the policy variables they are linked to with a "c", could change
     e_ctt["savt"] = SAV_com - sav
