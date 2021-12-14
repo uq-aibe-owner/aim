@@ -20,7 +20,7 @@ import os
 #======================================================================    
 # Routine compute the errors
 def ls_error(n_agents, t1, t2, num_points):
-    i=1
+    i=0
     while os.path.exists("errors%s.txt" % i):
       i += 1
     file=open('errors%s.txt' % i, 'w')
@@ -32,9 +32,9 @@ def ls_error(n_agents, t1, t2, num_points):
     y_test = np.zeros(num_points, float)
     to_print=np.empty((1,5))
 
-    if (t1 == 0 & t2-t1 == 1):
+    if (t1 == 0):
         t1+=1
-    for i in range(t1, t2-1):
+    for i in range(t1-1, t2-1):
         sum_diffs=0
         diff = 0
     
