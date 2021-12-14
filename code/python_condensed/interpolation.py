@@ -59,22 +59,34 @@ def GPR_iter(iteration, save_data=True):
             res = solver.iterate(Xtraining[iI], n_agt,initial=True,verbose=verbose)
         else: 
             res = solver.iterate(Xtraining[iI], n_agt, gp_old,initial=False,verbose=verbose)
-
+        SAV_add = np.zeros(n_agt, float)
+        ITM_add = np.zeros(n_agt, float)
+        for iter in range(n_agt):
+            SAV_add[iter] = res["SAV"][iter*n_agt] + res["SAV"][iter*n_agt+1]
+            ITM_add[iter] = res["ITM"][iter*n_agt] + res["ITM"][iter*n_agt+1]
         res['kap'] = Xtraining[iI]
         res['itr'] = iteration
         y[iI] = res['obj']
         ctt = res['ctt']
         msg = "Constraint values: " + str(ctt) + os.linesep
-        msg += "a quick check using output_f - consumption - investment" + os.linesep
+        msg += "a quick check using output_f - con - SAV_add - ITM_add" + os.linesep
         msg += (
-            str(output_f(Xtraining[iI], res['lab'], res["itm"]) - res['con'] - res['sav']) + os.linesep
+            str(output_f(Xtraining[iI], res['lab'], res["itm"]) - np.add(res['con'], SAV_add, ITM_add)) + os.linesep
         )
         msg += (
-            "and consumption, labor and investment are, respectively,"
+            "and consumption, labor, investment and intermediate inputs are, respectively,"
             + os.linesep
             + str(res['con'])
+            + os.linesep
             + str(res['lab'])
+            + os.linesep
+            + str(res['SAV'])
             + str(res['sav'])
+            + str(SAV_add)
+            + os.linesep
+            + str(res['ITM'])
+            + str(res['itm'])
+            + str(ITM_add)
         )
         if economic_verbose:
             print("{}".format(msg))

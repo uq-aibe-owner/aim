@@ -20,16 +20,21 @@ economic_verbose = True
 # How many training points for GPR
  # number of continuous dimensions of the model
 n_agt = 2 
-No_samples = 30 * n_agt
+No_samples = 40 * n_agt
 # control of iterations
-numstart = 0 # which is iteration to start (numstart = 0: start from scratch, number=/0: restart)
-fthrits = 8
+numstart = 10 # which is iteration to start (numstart = 0: start from scratch, number=/0: restart)
+fthrits = 2
 numits = numstart + fthrits  # which is the iteration to end
+# ======================================================================
 
-length_scale_bounds=(10e-2,10e1)
+# Number of test points to compute the error in the postprocessing
+No_samples_postprocess = 20
 
-alphaSK = 1e-0
-n_restarts_optimizer=0
+# ======================================================================
+length_scale_bounds=(10e-9,10e10)
+
+alphaSK = 1e-1
+n_restarts_optimizer=10
 filename = "restart/restart_file_step_"  # folder with the restart/result files
 
 # arbitrary indices for the policy variables 
@@ -72,14 +77,14 @@ d_ctt = {
 beta = 0.99
 #rho = 0.95
 #zeta = 0.0
-phik = 0.4
-phil = 0.35
+phik = 0.333
+phil = 0.333
 gamma = 2.0
 delta = 0.1
 eta = 1
 big_A = (1.0 - beta) / (phil**phil * phik**phik * (1-phik-phil)**(1-phik-phil) * beta)
 xi = np.ones(n_agt)*1/n_agt
-mu = np.ones(n_agt)*1/n_agt
+mu = np.array([0.3, .7])
 
 # Ranges For States
 kap_L = 2
@@ -93,13 +98,8 @@ pol_L = [1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2]
 pol_U = [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
 
 # In same order as i_ctt
-ctt_L = [-1e-3, -1e-3, -1e-3, -1e-3]
-ctt_U = [1e-3, 1e-3, 1e-3, 1e-3]
-
-# ======================================================================
-
-# Number of test points to compute the error in the postprocessing
-No_samples_postprocess = 20
+ctt_L = np.multiply(0,[-1e-3, -1e-3, -1e-3, -1e-3])
+ctt_U = np.multiply(0,[1e-3, 1e-3, 1e-3, 1e-3])
 
 #====================================================================== 
 #utility function u(c,l) 
@@ -134,9 +134,9 @@ def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm):
     f_prod=output_f(kap, lab, itm)
 
     # Summing the 2d policy variables 
-    SAV_com = np.zeros(n_agt, float)
+    SAV_com = np.ones(n_agt, float)
     SAV_add = np.zeros(n_agt, float)
-    ITM_com = np.zeros(n_agt, float)
+    ITM_com = np.ones(n_agt, float)
     ITM_add = np.zeros(n_agt, float)
     for iter in range(n_agt):
         for ring in range(n_agt):
@@ -147,11 +147,11 @@ def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm):
 
     e_ctt = dict()
     # canonical market clearing constraint
-    e_ctt["mclt"] = np.add(con, SAV_add, ITM_add)- f_prod
-    e_ctt["knxt"] = (1-delta)*kap + sav - knx
+    e_ctt["mclt"] = np.subtract(np.add(con, SAV_add, ITM_add), f_prod)
+    e_ctt["knxt"] = np.subtract(np.add((1-delta)*kap, sav), knx)
     # intermediate sum constraints, just switch the first letter of the policy variables they are linked to with a "c", could change
-    e_ctt["savt"] = SAV_com - sav
-    e_ctt["itmt"] = ITM_com - itm
+    e_ctt["savt"] = np.subtract(SAV_com, sav)
+    e_ctt["itmt"] = np.subtract(ITM_com, itm)
 #    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
     return e_ctt
 
