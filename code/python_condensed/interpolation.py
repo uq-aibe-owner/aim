@@ -31,10 +31,10 @@ from datetime import datetime
 #def GPR_iter(iteration, rng, save_data=True):
 def GPR_iter(iteration, save_data=True):
     
-    if iteration == 1: 
+    if iteration == 0: 
         gp_old = None 
 
-    elif iteration > 1: 
+    elif iteration > 0: 
         # Load the model from the previous iteration step
         restart_data = filename + str(iteration - 1) + ".pcl"
         with open(restart_data, "rb") as fd_old:
@@ -55,7 +55,7 @@ def GPR_iter(iteration, save_data=True):
     # solve bellman equations at training points
     # Xtraining is our initial level of capital for this iteration
     for iI in range(len(Xtraining)):
-        if iteration == 1: 
+        if iteration == 0: 
             res = solver.iterate(Xtraining[iI], n_agt,initial=True,verbose=verbose)
         else: 
             res = solver.iterate(Xtraining[iI], n_agt, gp_old,initial=False,verbose=verbose)

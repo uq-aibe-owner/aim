@@ -20,10 +20,10 @@ economic_verbose = True
 # How many training points for GPR
  # number of continuous dimensions of the model
 n_agt = 2 
-No_samples = 10 * n_agt
+No_samples = 30 * n_agt
 # control of iterations
-numstart = 2 # which is iteration to start (numstart = 1: start from scratch, number=/0: restart)
-fthrits = 2
+numstart = 0 # which is iteration to start (numstart = 0: start from scratch, number=/0: restart)
+fthrits = 8
 numits = numstart + fthrits  # which is the iteration to end
 
 length_scale_bounds=(10e-2,10e1)
