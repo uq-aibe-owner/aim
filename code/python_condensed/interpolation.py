@@ -62,7 +62,7 @@ def GPR_iter(iteration, save_data=True):
         SAV_add = np.zeros(n_agt, float)
         ITM_add = np.zeros(n_agt, float)
         for iter in range(n_agt):
-            SAV_add[iter] = res["SAV"][iter*n_agt] + res["SAV"][iter*n_agt+1]
+            SAV_add[iter] = np.add(res["SAV"][iter*n_agt], res["SAV"][iter*n_agt+1])
             ITM_add[iter] = res["ITM"][iter*n_agt] + res["ITM"][iter*n_agt+1]
         res['kap'] = Xtraining[iI]
         res['itr'] = iteration

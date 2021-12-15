@@ -1,0 +1,2 @@
+# with k_test varying across iterates:alphaSK=0.1,tolIpopt=0.1,n_restarts_optimizer=10,numstart=9,No_samples=4
+9.0000000000000000 38.3784969656082922 32.4103349535118284 64.6872230226708780 35.3988301310544529

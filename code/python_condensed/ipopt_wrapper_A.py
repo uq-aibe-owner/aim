@@ -27,18 +27,14 @@ def EV_F(X, kap, n_agt):
         else:
             # forms the 1d intermediate variables into globals of the same name in vector(list) form
             globals()[iter] = [X[ring] for ring in I_pol[iter]] """
-    
+    val = X[I_pol["val"]]
+    V_old1 = V_INFINITY(X[I_pol["knx"]])
     # Compute Value Function
-    VT_sum=utility(X[I_pol["con"]], X[I_pol["lab"]]) + beta*V_INFINITY(X[I_pol["knx"]])
+    VT_sum=utility(X[I_pol["con"]], X[I_pol["lab"]]) + beta*val
        
     return VT_sum
 
-# initial guess of the value function
-def V_INFINITY(kap=[]):
-    e=np.ones(len(kap))
-    c=output_f(kap,e, kap/3)
-    v_infinity=utility(c,e)/(1-beta)
-    return v_infinity
+
 
 #=======================================================================
 #   Objective Function during VFI (note - we need to interpolate on an "old" GPR)
@@ -51,9 +47,9 @@ def EV_F_ITER(X, kap, n_agt, gp_old):
     Xtest[0,:] = X[I_pol["knx"]]
     
     # interpolate the function, and get the point-wise std.
-    V_old, sigma_test = gp_old.predict(Xtest, return_std=True)
+    val = X[I_pol["val"]]
     
-    VT_sum = utility(X[I_pol["con"]], X[I_pol["lab"]]) + beta*V_old
+    VT_sum = utility(X[I_pol["con"]], X[I_pol["lab"]]) + beta*val
     
     return VT_sum
     
@@ -122,7 +118,7 @@ def EV_GRAD_F_ITER(X, kap, n_agt, gp_old):
 #======================================================================
 #   Equality constraints for the first time step of the model
       
-def EV_G(X, kap, n_agt):
+def EV_G(X, kap, n_agt, gp_old):
     M=n_ctt
     G=np.empty(M, float)
 
@@ -136,15 +132,15 @@ def EV_G(X, kap, n_agt):
 
 #======================================================================
 #   Equality constraints during the VFI of the model
-def EV_G_ITER(X, kap, n_agt):
+def EV_G_ITER(X, kap, n_agt, gp_old):
     
-    return EV_G(X, kap, n_agt)
+    return EV_G(X, kap, n_agt, gp_old)
 
 #======================================================================
 #   Computation (finite difference) of Jacobian of equality constraints 
 #   for first time step
     
-def EV_JAC_G(X, flag, kap, n_agt):
+def EV_JAC_G(X, flag, kap, n_agt, gp_old):
     N=n_pol
     M=n_ctt
     #print(N, "  ",M) #testing testing
@@ -166,13 +162,13 @@ def EV_JAC_G(X, flag, kap, n_agt):
     else:
         # Finite Differences
         h=1e-4
-        gx1=EV_G(X, kap, n_agt)
+        gx1=EV_G(X, kap, n_agt, gp_old)
         
         for ixM in range(M):
             for ixN in range(N):
                 xAdj=np.copy(X)
                 xAdj[ixN]=xAdj[ixN]+h
-                gx2=EV_G(xAdj, kap, n_agt)
+                gx2=EV_G(xAdj, kap, n_agt, gp_old)
                 A[ixN + ixM*N]=(gx2[ixM] - gx1[ixM])/h
         return A
   
@@ -180,7 +176,7 @@ def EV_JAC_G(X, flag, kap, n_agt):
 #   Computation (finite difference) of Jacobian of equality constraints 
 #   during iteration  
   
-def EV_JAC_G_ITER(X, flag, kap, n_agt):
+def EV_JAC_G_ITER(X, flag, kap, n_agt, gp_old):
     N=len(X)
     M=n_ctt
     NZ=M*N
@@ -201,13 +197,13 @@ def EV_JAC_G_ITER(X, flag, kap, n_agt):
     else:
         # Finite Differences
         h=1e-4
-        gx1=EV_G_ITER(X, kap, n_agt)
+        gx1=EV_G_ITER(X, kap, n_agt, gp_old)
 
         for ixM in range(M):
             for ixN in range(N):
                 xAdj=np.copy(X)
                 xAdj[ixN]=xAdj[ixN]+h
-                gx2=EV_G_ITER(xAdj, kap, n_agt)
+                gx2=EV_G_ITER(xAdj, kap, n_agt, gp_old)
                 A[ixN + ixM*N]=(gx2[ixM] - gx1[ixM])/h
         return A
     
@@ -245,16 +241,16 @@ class ipopt_obj():
 
     def eval_g(self, x): 
         if self.initial: 
-            return EV_G(x, self.k_init, self.n_agents)  
+            return EV_G(x, self.k_init, self.n_agents, self.gp_old)  
         else: 
-            return EV_G_ITER(x, self.k_init, self.n_agents) 
+            return EV_G_ITER(x, self.k_init, self.n_agents, self.gp_old) 
 
     def eval_jac_g(self, x, flag):
         if self.initial: 
             return EV_JAC_G(x, flag, self.k_init, self.n_agents) 
 
         else: 
-            return EV_JAC_G_ITER(x, flag, self.k_init, self.n_agents) 
+            return EV_JAC_G_ITER(x, flag, self.k_init, self.n_agents, self.gp_old) 
 
     def objective(self, x): 
         # Returns the scalar value of the objective given x. 

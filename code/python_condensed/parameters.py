@@ -49,7 +49,8 @@ i_pol = {
     "knx": 3,
     "ITM": 4,
     "SAV": 5,
-    "itm": 6
+    "itm": 6,
+    "val": 7
 }
 # dimensions of each policy variable
 d_pol = {
@@ -59,7 +60,8 @@ d_pol = {
     "knx": 1,
     "ITM": 2,
     "SAV": 2,
-    "itm": 1
+    "itm": 1,
+    "val": 0
 }
 
 # setup variables for constraints
@@ -67,13 +69,15 @@ i_ctt = {
     "mclt": 0,
     "knxt": 1, # has to be a different key name to knx for combined dicts
     "savt": 2, # same story as above
-    "itmt": 3  # same
+    "itmt": 3,  # same
+    "valt": 4
 }
 d_ctt = {
     "mclt": 1,
     "knxt": 1, # has to be a different key name to knx for combined dicts
     "savt": 1, # same story as above
-    "itmt": 1  # same
+    "itmt": 1,  # same
+    "valt": 0
 }
 # ======================================================================
 # Model Paramters
@@ -86,7 +90,7 @@ phil = 0.333
 gamma = 2.0
 delta = 0.1
 eta = 1
-big_A = (1.0 - beta) / (phil**phil * phik**phik * (1-phik-phil)**(1-phik-phil) * beta)
+big_A = 1/(phil**phil * phik**phik * (1-phik-phil)**(1-phik-phil))
 xi = np.ones(n_agt)*1/n_agt
 mu = np.array([0.3, .7])
 
@@ -98,8 +102,10 @@ range_cube = kap_U - kap_L  # range of [0..1]^d in 1D
 # Ranges for Controls
 
 # In same order as i_pol
-pol_L = [1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2, 1e-2]
-pol_U = [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+Lw = 1e-3
+Up = 1e3
+pol_L = np.array([Lw, Lw, Lw, Lw, Lw, Lw, Lw, -Up])
+pol_U = np.array([Up, Up, Up, Up, Up, Up, Up, Up])
 
 # In same order as i_ctt
 ctt_L = np.multiply(0,[-1e-3, -1e-3, -1e-3, -1e-3])
@@ -123,6 +129,13 @@ def utility(con=[], lab=[]):
     util=sum_util
     
     return util 
+#====================================================================== 
+# initial guess of the value function v(k)
+def V_INFINITY(kap=[]):
+    e=np.ones(len(kap))
+    c=output_f(kap,e, kap/3)
+    v_infinity=utility(c,e)/(1-beta)
+    return v_infinity
 
 #====================================================================== 
 # output_f 
@@ -134,7 +147,7 @@ def output_f(kap, lab, itm):
 #======================================================================
 # Constraints
 
-def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm):
+def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm, val, gp_old):
     f_prod=output_f(kap, lab, itm)
 
     # Summing the 2d policy variables 
@@ -145,10 +158,10 @@ def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm):
     for iter in range(n_agt):
         for ring in range(n_agt):
             SAV_com[iter] *= SAV[iter+n_agt*ring]**xi[ring]
-            SAV_add[iter] += SAV[iter*n_agt+ring]
             ITM_com[iter] *= ITM[iter+n_agt*ring]**mu[ring]
+            SAV_add[iter] += SAV[iter*n_agt+ring]
             ITM_add[iter] += ITM[iter*n_agt+ring]
-
+    gp_mean = gp_old.predict(Xtest, return_std=True)[0]
     e_ctt = dict()
     # canonical market clearing constraint
     e_ctt["mclt"] = np.subtract(np.add(con, SAV_add, ITM_add), f_prod)
@@ -156,6 +169,7 @@ def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm):
     # intermediate sum constraints, just switch the first letter of the policy variables they are linked to with a "c", could change
     e_ctt["savt"] = np.subtract(SAV_com, sav)
     e_ctt["itmt"] = np.subtract(ITM_com, itm)
+    e_ctt["valt"] = np.subtract(gp_mean, val)
 #    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
     return e_ctt
 
