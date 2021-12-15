@@ -44,7 +44,7 @@ rngm = np.random.default_rng(dt)  # fix seed #move to main so it doesnt re-initi
 for iter in range(numstart, numits):
 
     # terminal value function
-    interpol_comb.GPR_iter(iter)
+    res_fin = interpol_comb.GPR_iter(iter)
 
 # ======================================================================
 print("===============================================================")

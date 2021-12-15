@@ -43,10 +43,10 @@ def GPR_iter(iteration, save_data=True):
         fd_old.close()
 
     ##generate sample aPoints
-    now = datetime.now()
-    dt = int(now.strftime("%H"))#"%M%S%f"))
+    stt_nlp = time.time()
+    dt = int(now.strftime("%d%H%M%S%f"))#"%M%S%f"))
     # fix seed
-    rng = np.random.default_rng(dt)
+    rng = np.random.default_rng(12345)
     dim = n_agt
     Xtraining = rng.uniform(kap_L, kap_U, (No_samples, dim))
     y = np.zeros(No_samples, float)  # training targets
@@ -54,6 +54,7 @@ def GPR_iter(iteration, save_data=True):
     ctnr = []
     # solve bellman equations at training points
     # Xtraining is our initial level of capital for this iteration
+
     for iI in range(len(Xtraining)):
         if iteration == 0: 
             res = solver.iterate(Xtraining[iI], n_agt,initial=True,verbose=verbose)
@@ -92,7 +93,7 @@ def GPR_iter(iteration, save_data=True):
             print("{}".format(msg))
         if iteration == numits - 1:
             ctnr.append(res)
-
+    end_nlp = time.time()
     # print data for debugging purposes
     # for iI in range(len(Xtraining)):
     # print Xtraining[iI], y[iI]
@@ -108,9 +109,9 @@ def GPR_iter(iteration, save_data=True):
 
     # kernel = 1.0 * RBF(length_scale=100.0, length_scale_bounds=(1e-1, 2e2))
     # kernel = 1.0 * Matern(length_scale=1.0, length_scale_bounds=(1e-1, 10.0),nu=1.5)
-
+    stt_gpr = time.time()
     gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=n_restarts_optimizer, alpha=alphaSK)
-
+    end_gpr = time.time()
     # Fit to data using Maximum Likelihood Estimation of the parameters
     gp.fit(Xtraining, y)
 
