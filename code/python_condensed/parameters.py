@@ -13,21 +13,25 @@
 import numpy as np
 
 # ======================================================================
-
+## Verbosity of print output
 verbose = True
 economic_verbose = True
-
-# How many training points for GPR
- # number of continuous dimensions of the model
-n_agt = 2 
-No_samples = 40 * n_agt
-# control of iterations
-numstart = 10 # which is iteration to start (numstart = 0: start from scratch, number=/0: restart)
-fthrits = 2
-numits = numstart + fthrits  # which is the iteration to end
 # ======================================================================
-
-# Number of test points to compute the error in the postprocessing
+# number of continuous dimensions of the model
+n_agt = 2 
+# Number of training points to generate via NLP for GPR
+No_samples = 1000 * n_agt
+# ======================================================================
+## Control of Iterations
+# To start from scratch, set numstart = 0.
+# Otherwise set numstart equal to previous numits. (Equivalently,
+#set numstart equal to the last restart file number plus one.)
+numstart = 16 
+#how many iterations
+fthrits = 4
+numits = numstart + fthrits
+# ======================================================================
+# Number of test points to compute the error in postprocessing
 No_samples_postprocess = 20
 
 # ======================================================================
