@@ -50,7 +50,9 @@ i_pol = {
     "ITM": 4,
     "SAV": 5,
     "itm": 6,
-    "val": 7
+    "val": 7,
+    "utl": 8,
+    "out": 9
 }
 # dimensions of each policy variable
 d_pol = {
@@ -61,7 +63,9 @@ d_pol = {
     "ITM": 2,
     "SAV": 2,
     "itm": 1,
-    "val": 0
+    "val": 0,
+    "utl": 0,
+    "out": 1
 }
 
 # setup variables for constraints
@@ -69,15 +73,19 @@ i_ctt = {
     "mclt": 0,
     "knxt": 1, # has to be a different key name to knx for combined dicts
     "savt": 2, # same story as above
-    "itmt": 3,  # same
-    "valt": 4
+    "itmt": 3, # same
+    "valt": 4,
+    "utlt": 5,
+    "outt": 6
 }
 d_ctt = {
     "mclt": 1,
     "knxt": 1, # has to be a different key name to knx for combined dicts
     "savt": 1, # same story as above
-    "itmt": 1,  # same
-    "valt": 0
+    "itmt": 1, # same
+    "valt": 0,
+    "utlt": 0,
+    "outt": 1
 }
 # ======================================================================
 # Model Paramters
@@ -149,8 +157,8 @@ def output_f(kap, lab, itm):
 #======================================================================
 # Constraints
 
-def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm, val, gp_old, Xtest):
-    f_prod=output_f(kap, lab, itm)
+def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm, val, out, utl, gp_old, Xtest):
+    #f_prod=output_f(kap, lab, itm)
 
     # Summing the 2d policy variables 
     SAV_com = np.ones(n_agt, float)
@@ -166,12 +174,14 @@ def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm, val, gp_old, Xtest):
     gp_mean = gp_old.predict(Xtest, return_std=True)[0]
     e_ctt = dict()
     # canonical market clearing constraint
-    e_ctt["mclt"] = np.subtract(np.add(con, SAV_add, ITM_add), f_prod)
+    e_ctt["mclt"] = np.subtract(np.add(con, SAV_add, ITM_add), out)
     e_ctt["knxt"] = np.subtract(np.add((1-delta)*kap, sav), knx)
     # intermediate sum constraints, just switch the first letter of the policy variables they are linked to with a "c", could change
     e_ctt["savt"] = np.subtract(SAV_com, sav)
     e_ctt["itmt"] = np.subtract(ITM_com, itm)
     e_ctt["valt"] = np.subtract(gp_mean, val)
+    e_ctt["outt"] = big_A*(np.power(kap,phik))*(np.power(lab, phil))*(np.power(itm,(1.0 - phik - phil)))
+    e_ctt["utlt"] = utl - sum(np.log(con))
 #    e_ctt["blah blah blah"] = constraint rearranged into form that can be equated to zero
     return e_ctt
 
