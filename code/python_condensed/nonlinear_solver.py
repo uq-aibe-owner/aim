@@ -38,6 +38,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     X_L = np.empty(N)
     X_U = np.empty(N)
+    X_start = np.empty(N)
 
     Z_L = np.empty(N)
     Z_U = np.empty(N)
@@ -45,13 +46,12 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     # get coords of an individual grid points
     grid_pt_box = k_init
 
-    # set bounds for policy variables
+    # set bounds for policy variables # -J  this  loop could be way more efficient
     for iter in i_pol_key:
-        X_L[I_pol[iter]] = pol_L[i[iter]]
-        X_U[I_pol[iter]] = pol_U[i[iter]]
         # initial guesses for first iteration (aka a warm start)
         if iter != "sav":
-            X[I_pol[iter]] = 0.5*X_L[I_pol[iter]]+0.5*X_U[I_pol[iter]]
+            X[I_pol[iter]] = pol_S[i[iter]]
+        
 
     # Set bounds for the constraints
     for iter in i_ctt_key:

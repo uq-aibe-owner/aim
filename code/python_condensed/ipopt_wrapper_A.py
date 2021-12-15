@@ -122,11 +122,15 @@ def EV_G(X, kap, n_agt, gp_old):
     M=n_ctt
     G=np.empty(M, float)
 
+    s = (1,n_agt)
+    Xtest = np.zeros(s)
+    Xtest[0,:] = X[I_pol["knx"]]
+
     # pull in constraints
-    e_ctt = f_ctt(X[I_pol["con"]], X[I_pol["sav"]], X[I_pol["lab"]], kap, X[I_pol["knx"]], X[I_pol["SAV"]], X[I_pol["ITM"]], X[I_pol["itm"]])
+    e_ctt = f_ctt(X[I_pol["con"]], X[I_pol["sav"]], X[I_pol["lab"]], kap, X[I_pol["knx"]], X[I_pol["SAV"]], X[I_pol["ITM"]], X[I_pol["itm"]], X[I_pol["val"]], gp_old, Xtest)
     # apply all constraints with this one loop
     for iter in i_ctt_key:
-        G[I_ctt[iter]] = e_ctt[iter] # -J
+        G[I_ctt[iter]] = e_ctt[iter] 
 
     return G
 

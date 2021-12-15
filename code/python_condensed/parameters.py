@@ -107,9 +107,11 @@ Up = 1e3
 pol_L = np.array([Lw, Lw, Lw, Lw, Lw, Lw, Lw, -Up])
 pol_U = np.array([Up, Up, Up, Up, Up, Up, Up, Up])
 
+pol_S = np.array([10, 10, 10, 10, 10, 10, 10, -300])
+
 # In same order as i_ctt
-ctt_L = np.multiply(0,[-1e-3, -1e-3, -1e-3, -1e-3])
-ctt_U = np.multiply(0,[1e-3, 1e-3, 1e-3, 1e-3])
+ctt_L = np.multiply(0,[-1e-3,-1e-3,-1e-3,-1e-3,-1e-3])
+ctt_U = np.multiply(0,[ 1e-3, 1e-3, 1e-3, 1e-3, 1e-3])
 
 #====================================================================== 
 #utility function u(c,l) 
@@ -147,7 +149,7 @@ def output_f(kap, lab, itm):
 #======================================================================
 # Constraints
 
-def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm, val, gp_old):
+def f_ctt(con, sav, lab, kap, knx, SAV, ITM, itm, val, gp_old, Xtest):
     f_prod=output_f(kap, lab, itm)
 
     # Summing the 2d policy variables 
