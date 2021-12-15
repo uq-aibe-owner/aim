@@ -18,9 +18,9 @@ verbose = True
 economic_verbose = True
 # ======================================================================
 # number of continuous dimensions of the model
-n_agt = 2 
+n_agt = 20
 # Number of training points to generate via NLP for GPR
-No_samples = 1000 * n_agt
+No_samples = 3000 * n_agt
 # ======================================================================
 ## Control of Iterations
 # To start from scratch, set numstart = 0.
@@ -209,4 +209,4 @@ for iter in i_ctt_key:
     prv_ind += n_agt**d_ctt[iter]
 
 # merge two index dicts into one for referencing
-i = {**i_pol, **i_ctt} 
+i = {**i_pol, **i_ctt}
