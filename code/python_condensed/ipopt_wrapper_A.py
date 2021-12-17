@@ -23,35 +23,33 @@ def EV_F(X, kap, n_agt):
             globals()[iter] = np.zeros((n_agt,n_agt))
             for row in range(n_agt):
                 for col in range(n_agt):
-                    globals()[iter][row,col] = X[I_pol[iter][0]+col+row*n_agt]
+                    globals()[iter][row,col] = X[I[iter][0]+col+row*n_agt]
         else:
             # forms the 1d intermediate variables into globals of the same name in vector(list) form
-            globals()[iter] = [X[ring] for ring in I_pol[iter]] """
-    val = X[I_pol["val"]]
-    V_old1 = V_INFINITY(X[I_pol["knx"]])
+            globals()[iter] = [X[ring] for ring in I[iter]] """
+    """ val = X[I["val"]]
+    V_old1 = V_INFINITY(X[I["knx"]])
     # Compute Value Function
-    VT_sum=utility(X[I_pol["con"]], X[I_pol["lab"]]) + beta*val
+    VT_sum=utility(X[I["con"]], X[I["lab"]]) + beta*V_old1 """
        
-    return VT_sum
-
-
+    return X[I["utl"]] + beta*X[I["val"]]
 
 #=======================================================================
 #   Objective Function during VFI (note - we need to interpolate on an "old" GPR)
     
 def EV_F_ITER(X, kap, n_agt, gp_old):
     
-    # initialize correct data format for training point
+    """ # initialize correct data format for training point
     s = (1,n_agt)
     Xtest = np.zeros(s)
-    Xtest[0,:] = X[I_pol["knx"]]
+    Xtest[0,:] = X[I["knx"]]
     
     # interpolate the function, and get the point-wise std.
-    val = X[I_pol["val"]]
+    val = X[I["val"]]
     
-    VT_sum = utility(X[I_pol["con"]], X[I_pol["lab"]]) + beta*val
+    VT_sum = X[I["utl"]] + beta*val """
     
-    return VT_sum
+    return X[I["utl"]] + beta*X[I["val"]]
     
 #=======================================================================
 #   Computation of gradient (first order finite difference) of initial objective function 
@@ -124,13 +122,19 @@ def EV_G(X, kap, n_agt, gp_old):
 
     s = (1,n_agt)
     Xtest = np.zeros(s)
-    Xtest[0,:] = X[I_pol["knx"]]
+    Xtest[0,:] = X[I["knx"]]
+
+    """ print("should be the same")
+    #print(type(X[I["knx"]]))
+    print(np.shape(X[I["knx"]]))
+    #print(type(Xtest))
+    print(np.shape(Xtest)) """
 
     # pull in constraints
-    e_ctt = f_ctt(X[I_pol["con"]], X[I_pol["sav"]], X[I_pol["lab"]], kap, X[I_pol["knx"]], X[I_pol["SAV"]], X[I_pol["ITM"]], X[I_pol["itm"]], X[I_pol["val"]], gp_old, Xtest)
+    e_ctt = f_ctt(X, gp_old, Xtest, 1, kap)
     # apply all constraints with this one loop
-    for iter in i_ctt_key:
-        G[I_ctt[iter]] = e_ctt[iter] 
+    for iter in ctt_key:
+        G[I_ctt[iter]] = e_ctt[iter]
 
     return G
 
@@ -138,7 +142,26 @@ def EV_G(X, kap, n_agt, gp_old):
 #   Equality constraints during the VFI of the model
 def EV_G_ITER(X, kap, n_agt, gp_old):
     
-    return EV_G(X, kap, n_agt, gp_old)
+    M=n_ctt
+    G=np.empty(M, float)
+
+    s = (1,n_agt)
+    Xtest = np.zeros(s)
+    Xtest[0,:] = X[I["knx"]]
+
+    """ print("should be the same")
+    print(type(X[I["knx"]]))
+    print(np.shape(X[I["knx"]]))
+    print(type(Xtest))
+    print(np.shape(Xtest)) """
+
+    # pull in constraints
+    e_ctt = f_ctt(X, gp_old, Xtest, 0, kap)
+    # apply all constraints with this one loop
+    for iter in ctt_key:
+        G[I_ctt[iter]] = e_ctt[iter]
+
+    return G
 
 #======================================================================
 #   Computation (finite difference) of Jacobian of equality constraints 
@@ -251,7 +274,7 @@ class ipopt_obj():
 
     def eval_jac_g(self, x, flag):
         if self.initial: 
-            return EV_JAC_G(x, flag, self.k_init, self.n_agents) 
+            return EV_JAC_G(x, flag, self.k_init, self.n_agents, self.gp_old) 
 
         else: 
             return EV_JAC_G_ITER(x, flag, self.k_init, self.n_agents, self.gp_old) 

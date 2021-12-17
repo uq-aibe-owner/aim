@@ -25,6 +25,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel, Matern
 from numpy.random import PCG64
 from datetime import datetime
+import time 
 # ======================================================================
 
 
@@ -44,9 +45,9 @@ def GPR_iter(iteration, save_data=True):
 
     ##generate sample aPoints
     stt_nlp = time.time()
-    dt = int(now.strftime("%d%H%M%S%f"))#"%M%S%f"))
+    dt = 12345 #int(now.strftime("%d%H%M%S%f"))#"%M%S%f"))
     # fix seed
-    rng = np.random.default_rng(12345)
+    rng = np.random.default_rng(dt)
     dim = n_agt
     Xtraining = rng.uniform(kap_L, kap_U, (No_samples, dim))
     y = np.zeros(No_samples, float)  # training targets
@@ -60,11 +61,13 @@ def GPR_iter(iteration, save_data=True):
             res = solver.iterate(Xtraining[iI], n_agt,initial=True,verbose=verbose)
         else: 
             res = solver.iterate(Xtraining[iI], n_agt, gp_old,initial=False,verbose=verbose)
+        print(res['ITM'])
         SAV_add = np.zeros(n_agt, float)
         ITM_add = np.zeros(n_agt, float)
         for iter in range(n_agt):
             SAV_add[iter] = np.add(res["SAV"][iter*n_agt], res["SAV"][iter*n_agt+1])
             ITM_add[iter] = res["ITM"][iter*n_agt] + res["ITM"][iter*n_agt+1]
+        print(ITM_add)
         res['kap'] = Xtraining[iI]
         res['itr'] = iteration
         y[iI] = res['obj']
@@ -72,14 +75,15 @@ def GPR_iter(iteration, save_data=True):
         msg = "Constraint values: " + str(ctt) + os.linesep
         msg += "a quick check using output_f - con - SAV_add - ITM_add" + os.linesep
         msg += (
-            str(output_f(Xtraining[iI], res['lab'], res["itm"]) - np.add(res['con'], SAV_add, ITM_add)) + os.linesep
+            str(output_f(Xtraining[iI], res["itm"]) - np.add(res['con'], SAV_add, ITM_add)) + os.linesep
         )
+        print(ITM_add)
         msg += (
             "and consumption, labor, investment and intermediate inputs are, respectively,"
             + os.linesep
             + str(res['con'])
-            + os.linesep
-            + str(res['lab'])
+            #+ os.linesep
+            #+ str(res['lab'])
             + os.linesep
             + str(res['SAV'])
             + str(res['sav'])

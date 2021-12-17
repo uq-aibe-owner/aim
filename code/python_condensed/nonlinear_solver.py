@@ -46,17 +46,17 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     # get coords of an individual grid points
     grid_pt_box = k_init
 
-    # set bounds for policy variables # -J  this  loop could be way more efficient
-    for iter in i_pol_key:
+    # set bounds for policy variables 
+    """ for iter in pol_key:
         # initial guesses for first iteration (aka a warm start)
         if iter != "sav":
-            X[I_pol[iter]] = pol_S[i[iter]]
+            X[I[iter]] = pol_S[iter] """
         
 
     # Set bounds for the constraints
-    for iter in i_ctt_key:
-        G_L[I_ctt[iter]]=ctt_L[i[iter]]
-        G_U[I_ctt[iter]]=ctt_U[i[iter]]
+    for iter in ctt_key:
+        G_L[I_ctt[iter]]=ctt_L[iter]
+        G_U[I_ctt[iter]]=ctt_U[iter]
 
     HS07 = ipopt_obj(X, n_agents=n_agt, k_init=k_init, NELE_JAC=NELE_JAC, NELE_HESS=NELE_HESS, gp_old=gp_old, initial=initial, verbose=verbose) 
 
@@ -75,7 +75,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     nlp.add_option("tol", alphaSK)
     nlp.add_option("print_level", 0)
     nlp.add_option("hessian_approximation", "limited-memory")
-
+    nlp.add_option("max_iter", 2)
     optimal_soln, info = nlp.solve(X)
 
     x = info["x"]  # soln of the primal variables
@@ -104,8 +104,8 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     res['obj'] = obj
     res['ctt'] = ctt
 
-    for iter in i_pol_key:
-        res[iter] = x[I_pol[iter]]
+    for iter in pol_key:
+        res[iter] = x[I[iter]]
 
     return res
 
