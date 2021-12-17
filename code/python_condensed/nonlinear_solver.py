@@ -47,10 +47,10 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     grid_pt_box = k_init
 
     # set bounds for policy variables 
-    """ for iter in pol_key:
+    for iter in pol_key:
         # initial guesses for first iteration (aka a warm start)
         if iter != "sav":
-            X[I[iter]] = pol_S[iter] """
+            X[I[iter]] = pol_S[iter]
         
 
     # Set bounds for the constraints
@@ -75,7 +75,7 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
     nlp.add_option("tol", alphaSK)
     nlp.add_option("print_level", 0)
     nlp.add_option("hessian_approximation", "limited-memory")
-    nlp.add_option("max_iter", 2)
+    nlp.add_option("max_iter", 10)
     optimal_soln, info = nlp.solve(X)
 
     x = info["x"]  # soln of the primal variables
