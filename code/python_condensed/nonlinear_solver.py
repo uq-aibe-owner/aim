@@ -48,9 +48,13 @@ def iterate(k_init, n_agt, gp_old=None, final=False, initial=False, verbose=Fals
 
     # set bounds for policy variables 
     for iter in pol_key:
+        X_L[I[iter]]=pol_L[iter]
+        X_U[I[iter]]=pol_U[iter]
         # initial guesses for first iteration (aka a warm start)
-        if iter != "sav":
+        if iter != "sav" and iter != "con": # no warm starts for these
             X[I[iter]] = pol_S[iter]
+        else:
+            X[I[iter]] = pol_L[iter]
         
 
     # Set bounds for the constraints

@@ -41,8 +41,8 @@ def EV_F_ITER(X, kap, n_agt, gp_old):
     
     """ # initialize correct data format for training point
     s = (1,n_agt)
-    Xtest = np.zeros(s)
-    Xtest[0,:] = X[I["knx"]]
+    kap2 = np.zeros(s)
+    kap2[0,:] = X[I["knx"]]
     
     # interpolate the function, and get the point-wise std.
     val = X[I["val"]]
@@ -121,17 +121,17 @@ def EV_G(X, kap, n_agt, gp_old):
     G=np.empty(M, float)
 
     s = (1,n_agt)
-    Xtest = np.zeros(s)
-    Xtest[0,:] = X[I["knx"]]
+    kap2 = np.zeros(s)
+    kap2[0,:] = X[I["knx"]]
 
     """ print("should be the same")
     #print(type(X[I["knx"]]))
     print(np.shape(X[I["knx"]]))
-    #print(type(Xtest))
-    print(np.shape(Xtest)) """
+    #print(type(kap2))
+    print(np.shape(kap2)) """
 
     # pull in constraints
-    e_ctt = f_ctt(X, gp_old, Xtest, 1, kap)
+    e_ctt = f_ctt(X, gp_old, kap2, 1, kap)
     # apply all constraints with this one loop
     for iter in ctt_key:
         G[I_ctt[iter]] = e_ctt[iter]
@@ -146,17 +146,17 @@ def EV_G_ITER(X, kap, n_agt, gp_old):
     G=np.empty(M, float)
 
     s = (1,n_agt)
-    Xtest = np.zeros(s)
-    Xtest[0,:] = X[I["knx"]]
+    kap2 = np.zeros(s)
+    kap2[0,:] = X[I["knx"]]
 
     """ print("should be the same")
     print(type(X[I["knx"]]))
     print(np.shape(X[I["knx"]]))
-    print(type(Xtest))
-    print(np.shape(Xtest)) """
+    print(type(kap2))
+    print(np.shape(kap2)) """
 
     # pull in constraints
-    e_ctt = f_ctt(X, gp_old, Xtest, 0, kap)
+    e_ctt = f_ctt(X, gp_old, kap2, 0, kap)
     # apply all constraints with this one loop
     for iter in ctt_key:
         G[I_ctt[iter]] = e_ctt[iter]

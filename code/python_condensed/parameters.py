@@ -92,7 +92,7 @@ kap_U = 5
 range_cube = kap_U - kap_L  # range of [0..1]^d in 1D
 
 # Ranges for Controls
-pL = 1e-3
+pL = 1e-1
 pU = 1e3
 # Lower policy variables bounds
 pol_L = {
@@ -166,7 +166,7 @@ if not len(d_ctt)==len(ctt_U)==len(ctt_L):
 #====================================================================== 
 #utility function u(c,l) 
 def utility(con):
-    return sum(np.log(con+0.01))# + sum(lab)
+    return sum(np.log(con))# + sum(lab) # -J could make cobb-douglas, may fix /0 issue
 
 #====================================================================== 
 # initial guess of the value function v(k)
@@ -184,16 +184,16 @@ def output_f(kap, itm):
 
 #====================================================================== 
 # output_f
-def value_f(knx, init, gp_old, Xtest):
+def value_f(init, gp_old, Kap2):
     if init:
-        return V_INFINITY(knx)
+        return V_INFINITY(Kap2)
     else:
-        return gp_old.predict(Xtest, return_std=True)[1]
+        return gp_old.predict(Kap2, return_std=True)[1]
         
 #======================================================================
 # Constraints
 
-def f_ctt(X, gp_old, Xtest, init, kap):
+def f_ctt(X, gp_old, Kap2, init, kap):
     #f_prod=output_f(kap, lab, itm)
 
     # Summing the 2d policy variables 
@@ -216,7 +216,7 @@ def f_ctt(X, gp_old, Xtest, init, kap):
     e_ctt["savt"] = SAV_com - X[I["sav"]]
     e_ctt["itmt"] = ITM_com - X[I["itm"]]
     # value function constraint
-    e_ctt["valt"] = X[I["val"]] - value_f(X[I["knx"]],init,gp_old, Xtest)
+    e_ctt["valt"] = X[I["val"]] - sum(value_f(init,gp_old, Kap2))
     # output constraint
     e_ctt["outt"] = X[I["out"]] - output_f(kap,X[I["itm"]]) #*np.power(lab, phil)
     #utility constraint
