@@ -3,7 +3,8 @@ using LinearAlgebra, Statistics, BenchmarkTools, Interpolations, Parameters, Plo
 function K!(Kg, g, grid, β, ∂u∂c, f, f′, shocks)
 # This function requires the container of the output value as argument Kg
     # Construct radial basis functions
-    g_func = RBFInterpolator(grid, vec(g), 1)
+    #g_func = RBFInterpolator(grid, vec(g), 1)
+    g_func = LinearInterpolation(vec(grid), vec(g), extrapolation_bc=Line())
     # solve for updated consumption value
     for i in 1:length(grid[:,1])
         y=grid[i,:]
@@ -11,7 +12,7 @@ function K!(Kg, g, grid, β, ∂u∂c, f, f′, shocks)
             vals = ∂u∂c.(g_func.(sum(f.(y - c), dims=2)  * shocks)) .* f′(y - c) .* shocks
             return ∂u∂c(c) - β * mean(vals)
         end
-        Kg[i] = find_zero(h, (1e-10, y .- 1e-10)) # would need to make this N (or at least 2-dimensional for a test)
+        Kg[i] = find_zero(h, (1e-10, y[1] .- 1e-10)) # would need to make this N (or at least 2-dimensional for a test)
     end
     return Kg
 end
@@ -57,7 +58,7 @@ Model=@with_kw (α = 0.65,                            # Productivity parameter
                 γ = 1.0,                             # Risk aversion
                 μ = 0.0,                             # First parameter in lognorm(μ, σ)
                 s = 0.1,                             # Second parameter in lognorm(μ, σ)
-                numSec = 2,
+                numSec = 1,
                 gridMin = 1e-6,                     # Smallest grid point
                 gridMax = 4.0,                      # Largest grid point
                 gridSize = 20,                     # Number of grid points
