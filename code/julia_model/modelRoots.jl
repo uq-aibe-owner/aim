@@ -1,5 +1,14 @@
 using NLsolve, BenchmarkTools
 
+# number of sectors
+numSectors = 3
+
+# test initial capital
+k = ones(numSectors)
+
+# test initial output statespace
+y = ones(numSectors)
+
 # linear production function parameter
 ϕ = 0.5
 # time discount factor
@@ -11,44 +20,85 @@ using NLsolve, BenchmarkTools
 # savings scaling parameters
 σ = ones(numSectors, numSectors)
 
-# utility function of consumption
-u(c) = log(c)
-# derivative of utility w.r.t consumption
-u′(c) = 1/c
+# utility function of consumption vector
+u(c) = sum(log.(c))
+# derivative of utility w.r.t consumption in one element
+u′(c) = 1 / c
 
 # production function of capital
-f(k) = ϕ*k
+f(k) = ϕ * k
 # derivative of production w.r.t capital
 f′(k) = ϕ
 
 # future capital from current parameters
-kp(y,k,c) = (1-δ)*k+y-c
+kp(s,k) = (1 - δ) * k + s
 
 # this would be replaced by our interpolators in each sector in the iterations
 # a g function of the current below form is equivalent to our "first guess" of an interpolator
-g(y) = 1
+g(y) = ones(2*numSectors-1)
 
 # consumption as function of S_ij ∀ i,j
+c(S,y) = y .- sum(S, 2)
+
+# S_ij as function of S39
+function S(S39)
+    S = ones(numSectors, numSectors)
+
+    # fills in the known values first (the diagonal and end collumn)
+    for i in 1:numSectors
+        for j in 1:numSectors
+            if i == j
+                S[i,j] = S39[numSectors - 1 + i]
+            elseif j == numSectors
+                S[i,j] = S39[i]
+            end
+        end
+    end
+    # make partial Sb from the know values of S above
+    Sb = S ./ σ
+
+    # fills in the empty values in S using our partial Sb
+    for i in 1:numSectors
+        for j in 1:numSectors
+            if i != j && j != numSectors
+                S[i,j] = sigma[i,j] * Sb[jj] * Sb[i,numSectors] / Sb[j,numSectors]
+            end
+        end
+    end
+
+    # make full Sbb
+    for i in 1:numSectors
+        for j in 1:numSectors
+            Sbb[i,j] = Sb[i,j] / Sb[j,j]
+        end
+    end
+
+    # return savings matrix
+    return S
+end
+
+Sb(S) = S ./ σ
 
 
-# full S_ij from 39 element S_ij / bbS_ij
-
+# s_j from full S_ij
+s(S) = (sum(σ[l,:] .* S[l,:].^ρ for l in 1:numSectors)).^(1/ρ)
 
 # NLsolve approach
-function f!(F, c)
+function f!(F, S39)
     for i in 1:2*numSectors-1
-        if i <= numSectors
-            # Nth collumn of double blackboard S matrix
-            F[i] = Sb[i,j]/Sb[j,j] - u′(c[j])/u′(c[i])
+        if i < numSectors
+            # Nth (last) collumn of double blackboard S matrix, excluding diagonal corner
+            F[i] = u′(c(S, y)[numSectors]) / u′(c(S, y)[i]) - Sb(S(S39))[i,numSectors]/Sb(S(S39))[numSectors,numSectors]
         else
-            # Diagonals of blackboard S matrix
-            F[i] = (f′(β)*β*u′(g(f(kp(y,k[i],c[i]))))/(u′(c[i])))^(-rho/(1-rho))-sum(σ[l,j]*(u′[c[j]]) for l in 1:numSectors)
+            # Diagonals of S matrix
+            j = i - numSectors + 1
+            F[i] = (f′(β) * β * u′(c(S(g(y)), kp(s(S), k))[j])) / (u′(c(S, y)))^(-rho/(1 - rho)) - S39[j] / (σ[j,j] * s(S))
         end
     end
 end
 
-# warm start for consumption values
-initial_x = 1.5*ones(numSectors)
+# warm start for savings values
+initial_x = 1.5*ones(2*numSectors-1)
 
 # solve
 nlsolve(f!, initial_x)
