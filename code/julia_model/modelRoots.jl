@@ -3,22 +3,22 @@ using NLsolve, BenchmarkTools
 # number of sectors
 numSectors = 3
 
-# test initial capital
-k = ones(numSectors)
-
 # test initial output statespace
 y = ones(numSectors)
 
 # linear production function parameter
 ϕ = 0.5
 # time discount factor
-β = 0.9
+β = 0.96
 # elasticity parameter
-ρ = 10
+ρ = -9
 # depreciation
-δ = 1
+δ = 0.2
 # savings scaling parameters
 σ = 1 / numSectors .* ones(numSectors, numSectors)
+
+# test initial capital
+k = y ./ ϕ
 
 # utility function of consumption vector
 u(c) = sum(log.(c))
@@ -35,7 +35,7 @@ kp(s,k) = (1 - δ) * k + s
 
 # this would be replaced by our interpolators in each sector in the iterations
 # a g function of the current below form is equivalent to our "first guess" of an interpolator
-g(y) = 0.5 .* ones(2*numSectors-1)
+g(y) = 1 / (3 * numSectors^2) .* ones(2*numSectors-1)
 
 # consumption as function of S_ij ∀ i,j
 c(S,y) = y .- sum(S, dims = 2)
@@ -82,18 +82,18 @@ Sb(S) = S ./ σ
 
 
 # s_j from full S_ij
-s(S) = (sum(σ[l,:] .* S[l,:].^ρ for l in 1:numSectors)).^(1/ρ)
+s(S) = (sum(σ[l,:] .* abs.(S[l,:]).^ρ for l in 1:numSectors)).^(1/ρ)
 
 # NLsolve approach
 function f!(F, S39)
     for i in 1:2*numSectors-1
         if i < numSectors
             # Nth (last) collumn of double blackboard S matrix, excluding diagonal corner
-            F[i] = u′(c(S(S39), y)[numSectors]) / u′(c(S(S39), y)[i]) - Sb(S(S39))[i,numSectors]/Sb(S(S39))[numSectors,numSectors]
+            F[i] = u′(c(S(abs.(S39)), y)[numSectors]) / u′(c(S(abs.(S39)), y)[i]) - Sb(S(abs.(S39)))[i,numSectors]/Sb(S(abs.(S39)))[numSectors,numSectors]
         else
             # Diagonals of S matrix
             j = i - numSectors + 1
-            F[i] = (f′(β) * β * u′(c(S(g(y)), kp(s(S(S39)), k))[j])) / (u′(c(S(S39), y)[numSectors]))^(ρ) - S39[i] / (σ[j,j] * s(S(S39))[j]) # -ρ / (1 - ρ) put back inside exponent
+            F[i] = abs((f′(β) * β * u′(c(S(g(y)), kp(s(S(abs.(S39))), k))[j])) / (u′(c(S(abs.(S39)), y)[numSectors]))).^(ρ / (1 - ρ)) - (abs.(S39[i]) / (σ[j,j] * s(S(abs.(S39)))[j])) # ρ / (1 - ρ) put back inside exponent
         end
     end
 end
