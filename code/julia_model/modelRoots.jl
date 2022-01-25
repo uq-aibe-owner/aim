@@ -14,7 +14,7 @@ y = ones(numSectors)
 # time discount factor
 β = 0.9
 # elasticity parameter
-ρ = -10
+ρ = 10
 # depreciation
 δ = 1
 # savings scaling parameters
@@ -38,7 +38,7 @@ kp(s,k) = (1 - δ) * k + s
 g(y) = ones(2*numSectors-1)
 
 # consumption as function of S_ij ∀ i,j
-c(S,y) = y .- sum(S, 2)
+c(S,y) = y .- sum(S, dims = 2)
 
 # S_ij as function of S39
 function S(S39)
@@ -61,12 +61,13 @@ function S(S39)
     for i in 1:numSectors
         for j in 1:numSectors
             if i != j && j != numSectors
-                S[i,j] = sigma[i,j] * Sb[jj] * Sb[i,numSectors] / Sb[j,numSectors]
+                S[i,j] = σ[i,j] * Sb[j,j] * Sb[i,numSectors] / Sb[j,numSectors]
             end
         end
     end
 
     # make full Sbb
+    Sbb = ones(numSectors, numSectors)
     for i in 1:numSectors
         for j in 1:numSectors
             Sbb[i,j] = Sb[i,j] / Sb[j,j]
@@ -88,17 +89,17 @@ function f!(F, S39)
     for i in 1:2*numSectors-1
         if i < numSectors
             # Nth (last) collumn of double blackboard S matrix, excluding diagonal corner
-            F[i] = u′(c(S, y)[numSectors]) / u′(c(S, y)[i]) - Sb(S(S39))[i,numSectors]/Sb(S(S39))[numSectors,numSectors]
+            F[i] = u′(c(S(S39), y)[numSectors]) / u′(c(S(S39), y)[i]) - Sb(S(S39))[i,numSectors]/Sb(S(S39))[numSectors,numSectors]
         else
             # Diagonals of S matrix
             j = i - numSectors + 1
-            F[i] = (f′(β) * β * u′(c(S(g(y)), kp(s(S), k))[j])) / (u′(c(S, y)))^(-rho/(1 - rho)) - S39[j] / (σ[j,j] * s(S))
+            F[i] = (f′(β) * β * u′(c(S(g(y)), kp(s(S(S39)), k))[j])) / (u′(c(S(S39), y)[numSectors]))^(ρ) - S39[i] / (σ[j,j] * s(S(S39))[j]) # -ρ / (1 - ρ) put back inside power
         end
     end
 end
 
 # warm start for savings values
-initial_x = 1.5*ones(2*numSectors-1)
+initial_x = 100*ones(2*numSectors-1)
 
 # solve
 nlsolve(f!, initial_x)
