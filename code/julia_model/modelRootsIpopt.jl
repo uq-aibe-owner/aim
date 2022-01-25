@@ -18,7 +18,7 @@ y = ones(numSectors)
 # depreciation
 δ = 1
 # savings scaling parameters
-σ = 1 / numSectors .* ones(numSectors, numSectors)
+σ = ones(numSectors, numSectors)
 
 # utility function of consumption vector
 u(c) = sum(log.(c))
@@ -35,7 +35,7 @@ kp(s,k) = (1 - δ) * k + s
 
 # this would be replaced by our interpolators in each sector in the iterations
 # a g function of the current below form is equivalent to our "first guess" of an interpolator
-g(y) = 0.5 .* ones(2*numSectors-1)
+g(y) = ones(2*numSectors-1)
 
 # consumption as function of S_ij ∀ i,j
 c(S,y) = y .- sum(S, dims = 2)
@@ -84,6 +84,13 @@ Sb(S) = S ./ σ
 # s_j from full S_ij
 s(S) = (sum(σ[l,:] .* S[l,:].^ρ for l in 1:numSectors)).^(1/ρ)
 
+modTrial = Model(Ipopt.Optimizer)
+set_silent(modTrial)
+@variable(modTrial, c[1:numSectors] >= 0.01)
+@NLobjective(modTrial, Min, sum((u(c[i]))^2 for i in 1:numSectors))
+@btime JuMP.optimize!(modTrial)
+println(value.(c))
+
 # NLsolve approach
 function f!(F, S39)
     for i in 1:2*numSectors-1
@@ -99,7 +106,7 @@ function f!(F, S39)
 end
 
 # warm start for savings values
-initial_x = 0.5 .* ones(2*numSectors-1)
+initial_x = 0.5*ones(2*numSectors-1)
 
 # solve
 nlsolve(f!, initial_x)
